@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "metricName": {
+        "type": "keyword"
+      },
+      "assetName": {
+        "type": "keyword"
+      },
+      "period": {
+        "type": "keyword"
+      },
+      "startedAt": {
+        "type": "date"
+      },
+      "dims": {
+        "type": "flattened"
+      },
+      "value": {
+        "type": "double"
+      },
+      "multiValue1": {
+        "type": "double"
+      },
+      "multiValue2": {
+        "type": "double"
+      },
+      "multiValue3": {
+        "type": "double"
+      },
+      "multiValue4": {
+        "type": "double"
+      },
+      "multiValue5": {
+        "type": "double"
+      }
+    }
+  }
+}

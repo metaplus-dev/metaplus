@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/patch-request.json",
+  "title": "PatchRequest",
+  "description": "Patch API request payload.",
+  "type": "object",
+  "properties": {
+    "method": {
+      "description": "Patch operation to execute against meta or plus content.",
+      "type": "string",
+      "enum": [
+        "/meta/create",
+        "/meta/update",
+        "/meta/upsert",
+        "/meta/refactor",
+        "/meta/delete",
+        "/meta/updateByQuery",
+        "/meta/refactorByQuery",
+        "/meta/deleteByQuery",
+        "/plus/update",
+        "/plus/script",
+        "/plus/updateByQuery"
+      ]
+    },
+    "domain": {
+      "description": "Target domain for the patch operation.",
+      "$ref": "base.json#/$defs/domain"
+    },
+    "fqmn": {
+      "description": "Fully qualified metadata name of the target document when the patch addresses a single object.",
+      "$ref": "base.json#/$defs/fqmn"
+    },
+    "patchedAt": {
+      "description": "Timestamp recorded for the patch request.",
+      "$ref": "base.json#/$defs/atTime"
+    },
+    "patchedBy": {
+      "description": "Human or agent identifier that initiated the patch.",
+      "$ref": "base.json#/$defs/byName"
+    },
+    "doc": {
+      "description": "Document payload used by create, update, upsert, or refactor style operations.",
+      "$ref": "metaplus-doc.json"
+    },
+    "query": {
+      "description": "Query used by by-query patch operations.",
+      "$ref": "base.json#/$defs/query"
+    },
+    "script": {
+      "description": "Script payload used for scripted patch operations.",
+      "$ref": "base.json#/$defs/script"
+    }
+  },
+  "required": ["method", "domain"],
+  "additionalProperties": false
+}

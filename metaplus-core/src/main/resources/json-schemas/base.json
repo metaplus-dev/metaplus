@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/base.json",
+  "title": "MetaplusBase",
+  "description": "Shared reusable schema definitions for identity, metadata envelopes, query fragments, scripts, and patch results.",
+  "$defs": {
+    "scalar": {
+      "title": "ScalarValue",
+      "description": "A primitive value allowed in generic filters, sort values, and script parameters.",
+      "type": ["string", "number", "boolean", "null"]
+    },
+
+    "fqmn": {
+      "title": "FQMN",
+      "type": "string",
+      "description": "Fully qualified metadata name: <domain>:<system>:<instance>:<entity>",
+      "pattern": "^[^:]+:[^:]+:[^:]+:[^:]+$"
+    },
+    "domain": {
+      "title": "DomainName",
+      "type": "string",
+      "description": "Top-level logical domain name used to partition metadata and runtime operations.",
+      "pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
+      "maxLength": 100
+    },
+    "domains": {
+      "title": "DomainNames",
+      "description": "A list of domain names used to scope multi-domain requests.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/domain" }
+    },
+    "system": {
+      "title": "SystemName",
+      "type": "string",
+      "description": "Source system name that owns or synchronizes the metadata.",
+      "pattern": "^[a-z0-9_-]+$",
+      "maxLength": 100
+    },
+    "instance": {
+      "title": "InstanceName",
+      "type": "string",
+      "description": "Instance name within the source system, such as an environment, cluster, or account.",
+      "pattern": "^[a-z0-9_-]+$",
+      "maxLength": 100
+    },
+    "entity": {
+      "title": "EntityName",
+      "type": "string",
+      "description": "Entity identifier within the source instance, for example a table, topic, or model path.",
+      "pattern": "^[a-zA-Z0-9_./\\-()\\[\\]]+$",
+      "maxLength": 300
+    },
+    "atTime": {
+      "title": "Timestamp",
+      "type": "string",
+      "description": "Canonical UTC timestamp represented as an RFC 3339 date-time string.",
+      "format": "date-time"
+    },
+    "byName": {
+      "title": "ActorName",
+      "type": "string",
+      "description": "Human or agent identifier that performed an operation.",
+      "minLength": 1
+    },
+
+
+    "idea": {
+      "title": "IdeaSection",
+      "type": "object",
+      "description": "Stable identity section of a Metaplus document, carrying FQMN and its decomposed parts.",
+      "properties": {
+        "fqmn": {
+          "$ref": "#/$defs/fqmn"
+        },
+        "domain": {
+          "$ref": "#/$defs/domain"
+        },
+        "system": {
+          "$ref": "#/$defs/system"
+        },
+        "instance": {
+          "$ref": "#/$defs/instance"
+        },
+        "entity": {
+          "$ref": "#/$defs/entity"
+        },
+        "version": {
+          "type": "integer"
+        }
+      },
+      "required": ["fqmn", "domain", "system", "instance", "entity"],
+      "additionalProperties": true
+    },
+    "info": {
+      "title": "InfoSection",
+      "type": "object",
+      "description": "Operational bookkeeping for versioning and inner storage identifiers of meta and plus sections.",
+      "properties": {
+        "meta": {
+          "properties": {
+            "version": {
+              "type": "integer"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "createdBy": {
+              "type": "string"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedBy": {
+              "type": "string"
+            }
+          }
+        },
+        "plus": {
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedBy": {
+              "type": "string"
+            }
+          }
+        },
+        "innerId": { "type": "string"},
+        "innerVersion": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "query": {
+      "title": "QueryClause",
+      "description": "Reusable query fragment compatible with the supported Metaplus search and patch APIs.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "term": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "$ref": "#/$defs/scalar"
+              }
+            }
+          },
+          "required": ["term"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "terms": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/scalar" },
+                "minItems": 1
+              }
+            }
+          },
+          "required": ["terms"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "match": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "query": { "type": "string" },
+                      "operator": { "enum": ["and", "or"] }
+                    },
+                    "required": ["query"],
+                    "additionalProperties": true
+                  }
+                ]
+              }
+            }
+          },
+          "required": ["match"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": true
+            }
+          },
+          "required": ["range"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "exists": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["field"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["exists"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "bool": {
+              "type": "object",
+              "properties": {
+                "must": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/query" }
+                },
+                "filter": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/query" }
+                },
+                "should": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/query" }
+                },
+                "must_not": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/query" }
+                },
+                "minimum_should_match": {
+                  "oneOf": [
+                    { "type": "integer", "minimum": 0 },
+                    { "type": "string" }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "anyOf": [
+                { "required": ["must"] },
+                { "required": ["filter"] },
+                { "required": ["should"] },
+                { "required": ["must_not"] }
+              ]
+            }
+          },
+          "required": ["bool"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "script": {
+      "title": "ScriptDefinition",
+      "description": "Reusable script payload for patch-style operations.",
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lang": {
+          "type": "string",
+          "minLength": 1
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["source"] },
+        { "required": ["id"] }
+      ]
+    },
+    "result": {
+      "title": "PatchResult",
+      "description": "Normalized result counters returned by write and delete style operations.",
+      "properties": {
+        "innerId": { "type": "string" },
+        "innerVersion": { "type": "integer" },
+        "created": { "type": "integer" },
+        "updated": { "type": "integer" },
+        "deleted": { "type": "integer" },
+        "noops": { "type": "integer" },
+        "notFound": { "type": "integer" },
+        "total": { "type": "integer" }
+      }
+    }
+  }
+}

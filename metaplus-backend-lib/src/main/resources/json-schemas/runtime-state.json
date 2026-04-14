@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/runtime-state.json",
+  "title": "RuntimeState",
+  "description": "Runtime sidecar state for a single FQMN.",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "description": "Domain extracted from the FQMN for filtering and partition-style queries.",
+      "$ref": "base.json#/$defs/domain"
+    },
+    "fqmn": {
+      "description": "Stable identity of the source-aligned object tracked by runtime state.",
+      "$ref": "base.json#/$defs/fqmn"
+    },
+    "upsertedAt": {
+      "$ref": "base.json#/$defs/atTime",
+      "description": "Canonical UTC timestamp of the last upsert."
+    },
+    "deletedAt": {
+      "$ref": "base.json#/$defs/atTime",
+      "description": "Canonical UTC timestamp of the last delete mark."
+    },
+    "lastSamplingAt": {
+      "$ref": "base.json#/$defs/atTime",
+      "description": "Canonical UTC timestamp of the last completed sampling job."
+    },
+    "lastLlmGenAt": {
+      "$ref": "base.json#/$defs/atTime",
+      "description": "Canonical UTC timestamp of the last completed LLM generation job."
+    }
+  },
+  "required": ["fqmn", "domain"],
+  "additionalProperties": false
+}

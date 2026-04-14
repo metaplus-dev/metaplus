@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/patch-response.json",
+  "title": "PatchResponse",
+  "description": "Generic patch API response envelope.",
+  "type": "object",
+  "properties": {
+    "code": {
+      "description": "Application-level status code for the patch operation.",
+      "type": "integer"
+    },
+    "msg": {
+      "description": "Human-readable outcome message.",
+      "type": "string"
+    },
+    "body": {
+      "description": "Normalized counters and identifiers returned by the underlying write operation.",
+      "$ref": "base.json#/$defs/result"
+    }
+  },
+  "required": ["code", "msg"],
+  "additionalProperties": false
+}

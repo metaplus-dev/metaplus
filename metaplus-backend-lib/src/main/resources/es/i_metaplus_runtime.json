@@ -1,0 +1,25 @@
+{
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "fqmn": {
+        "type": "keyword"
+      },
+      "domain": {
+        "type": "keyword"
+      },
+      "upsertedAt": {
+        "type": "date"
+      },
+      "deletedAt": {
+        "type": "date"
+      },
+      "lastSamplingAt": {
+        "type": "date"
+      },
+      "lastLlmGenAt": {
+        "type": "date"
+      }
+    }
+  }
+}

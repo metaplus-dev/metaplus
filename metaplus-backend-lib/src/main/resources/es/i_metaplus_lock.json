@@ -1,0 +1,22 @@
+{
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "lockedBy": {
+        "type": "keyword"
+      },
+      "lockedAt": {
+        "type": "date"
+      },
+      "expiredAt": {
+        "type": "date"
+      },
+      "isReleased": {
+        "type": "boolean"
+      },
+      "releasedAt": {
+        "type": "date"
+      }
+    }
+  }
+}
