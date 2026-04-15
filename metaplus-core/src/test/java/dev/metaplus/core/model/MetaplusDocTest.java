@@ -13,7 +13,7 @@ class MetaplusDocTest {
 
     @Test
     void accessorsReadIdeaAndInfoMetadata() {
-        MetaplusDoc.Idea idea = new MetaplusDoc.Idea();
+        Idea idea = new Idea();
         idea.setFqmn("data:mysql:main:warehouse.sales.orders");
         idea.setDomain("data");
         idea.setSystem("mysql");

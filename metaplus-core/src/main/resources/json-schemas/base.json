@@ -13,13 +13,13 @@
     "fqmn": {
       "title": "FQMN",
       "type": "string",
-      "description": "Fully qualified metadata name: <domain>:<system>:<instance>:<entity>",
+      "description": "Fully qualified metadata name: <domain>:<system>:<instance>:<entity>. The domain part may use dot-separated taxonomy such as data.table.",
       "pattern": "^[^:]+:[^:]+:[^:]+:[^:]+$"
     },
     "domain": {
       "title": "DomainName",
       "type": "string",
-      "description": "Top-level logical domain name used to partition metadata and runtime operations.",
+      "description": "Logical domain name used to partition metadata and runtime operations. The domain may use dot-separated taxonomy such as data.table.",
       "pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
       "maxLength": 100
     },

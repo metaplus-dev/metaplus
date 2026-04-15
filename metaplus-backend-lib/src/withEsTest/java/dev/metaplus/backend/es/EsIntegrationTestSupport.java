@@ -4,7 +4,6 @@ import dev.metaplus.backend.BackendException;
 import dev.metaplus.core.json.Jsons;
 import org.junit.jupiter.api.BeforeEach;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -23,8 +22,7 @@ public abstract class EsIntegrationTestSupport {
 
     @BeforeEach
     void setUpEsClient() {
-        esClient = new EsClient();
-        ReflectionTestUtils.setField(esClient, "baseUrl", resolveBaseUrl());
+        esClient = new EsClient(resolveBaseUrl());
     }
 
     protected String uniqueIndexName(String baseName) {
@@ -65,7 +63,13 @@ public abstract class EsIntegrationTestSupport {
     }
 
     private static String resolveBaseUrl() {
-        String externalBaseUrl = System.getProperty("metaplus.test.es.baseUrl");
+        String externalBaseUrl = System.getProperty("metaplus.backend.es.baseUrl");
+        if (externalBaseUrl == null || externalBaseUrl.isBlank()) {
+            externalBaseUrl = System.getenv("METAPLUS_BACKEND_ES_BASEURL");
+        }
+        if (externalBaseUrl == null || externalBaseUrl.isBlank()) {
+            externalBaseUrl = System.getProperty("metaplus.test.es.baseUrl");
+        }
         if (externalBaseUrl == null || externalBaseUrl.isBlank()) {
             externalBaseUrl = System.getenv("METAPLUS_TEST_ES_BASEURL");
         }

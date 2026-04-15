@@ -14,9 +14,7 @@ import java.time.Instant;
  * It is intentionally separate from MetaplusDoc so runtime execution state does
  * not pollute source metadata or plus enrichments.</p>
  */
-@Getter
-@Setter
-@ValidJsonSchema(ref = "runtime-state.json")
+@Getter @Setter
 public class RuntimeState extends JsonObject {
 
     /** Stable identity of the source-aligned object. */

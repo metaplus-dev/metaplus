@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.openhft.hashing.LongHashFunction;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,13 +30,19 @@ import java.util.Map;
 @Component
 public class MetricStore {
 
-    @Autowired
-    private EsClient esClient;
+    private final EsClient esClient;
 
-    private static final String INDEX_METRIC = "i_metaplus_metric";
+    private final String indexName;
+
+    public MetricStore(EsClient esClient,
+                       @Value("${metaplus.backend.es.indices.metric:i_metaplus_metric}")
+                       String indexName) {
+        this.esClient = esClient;
+        this.indexName = indexName;
+    }
 
     public void refresh() {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(INDEX_METRIC);
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(indexName());
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
             throw new BackendException("Refresh failed. Es.res code:"
@@ -49,7 +55,7 @@ public class MetricStore {
         SchemaUtil.requireValid(metric);
 
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{id}")
-                .build(INDEX_METRIC, genMetricIdHash(metric));
+                .build(indexName(), genMetricIdHash(metric));
         EsResponse response = esClient.put(uri, metric);
         if (!response.isSuccess()) {
             throw new BackendException("MetricStore.post metric=" + metric + " fail. Es.res code:"
@@ -63,7 +69,7 @@ public class MetricStore {
 
         List<BulkItemReq> bulkItemReqs = new ArrayList<>(metrics.size());
         metrics.forEach(metric -> {
-            bulkItemReqs.add(new BulkItemReq(BulkItemMethod.INDEX, INDEX_METRIC, genMetricIdHash(metric), metric));
+            bulkItemReqs.add(new BulkItemReq(BulkItemMethod.INDEX, indexName(), genMetricIdHash(metric), metric));
         });
         EsResponse response = esClient.bulk(bulkItemReqs);
         if (!response.isSuccess()) {
@@ -79,7 +85,7 @@ public class MetricStore {
 
 
     public List<Metric> get(@Valid @NonNull MetricQuery metricQuery) {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_search").build(INDEX_METRIC);
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_search").build(indexName());
         JsonObject reqBody = toSearchRequest(metricQuery);
         reqBody.put("sort", JsonObject.of("startedAt", "asc"));
         reqBody.put("from", metricQuery.getFrom());
@@ -98,7 +104,7 @@ public class MetricStore {
 
 
     public Result delete(@Valid @NonNull MetricQuery metricQuery) {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query").build(INDEX_METRIC);
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query").build(indexName());
         JsonObject reqBody = toSearchRequest(metricQuery);
 
         EsResponse response = esClient.post(uri, reqBody);
@@ -161,6 +167,10 @@ public class MetricStore {
             }
         }
         return JsonObject.of("query", query);
+    }
+
+    private String indexName() {
+        return indexName;
     }
 
 

@@ -72,7 +72,7 @@ public class EsResponse {
 
         Result result = new Result();
         for (int i = 0; i < items.size(); i++) {
-            Result itemResult = bulkItemToResult(items.getJsonObject(i));
+            Result itemResult = _bulkItemToResult(items.getJsonObject(i));
             if (itemResult != null) {
                 result.plus(itemResult);
             }
@@ -80,11 +80,8 @@ public class EsResponse {
         return result;
     }
 
-    public static Result bulkItemToResult(JsonObject bulkItem) {
-        if (bulkItem == null) {
-            return null;
-        }
-
+    private static Result _bulkItemToResult(JsonObject bulkItem) {
+        if (bulkItem == null) return null;
         for (String opKey : BULK_ITEM_OP_KEYS) {
             JsonObject opBody = bulkItem.getJsonObject(opKey);
             if (opBody != null) {

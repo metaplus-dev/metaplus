@@ -11,10 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DistributedLockMappingResourceTest {
 
+    private static final String LOCK_INDEX_RESOURCE = "es/i_metaplus_lock.json";
+
     @Test
     void lockIndexMappingResourceExistsAndDeclaresStrictFields() throws IOException {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(DistributedLock.INDEX_CONFIG_FILE)) {
-            assertNotNull(inputStream, "Missing resource " + DistributedLock.INDEX_CONFIG_FILE);
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(LOCK_INDEX_RESOURCE)) {
+            assertNotNull(inputStream, "Missing resource " + LOCK_INDEX_RESOURCE);
             String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             assertTrue(content.contains("\"dynamic\": \"strict\""));
             assertTrue(content.contains("\"lockedBy\""));

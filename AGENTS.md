@@ -1,125 +1,70 @@
 # Metaplus Agents
-Metaplus -- A Plus Replica of Metadata Truth
 
-This document defines how Metaplus is built, evolved, and maintained.
+Metaplus — A Plus Replica of Metadata Truth
 
----
-# 1. Mission
+This document defines the project mission and the working rules for contributors, including AI agents.
+It does not define the normative system contract or module structure.
 
-Metaplus aims to build an open and unified metadata platform for the AI era.
-
-Any system can define, connect, and synchronize metadata through Metaplus, in real time or on schedule.
-
-At this stage, Metaplus focuses on the data domain so that people and agents can manage and use data with clarity, confidence, and control.
+- For system rules: see `SPEC.md`
+- For module boundaries and dependencies: see `ARCHITECTURE.md`
+- For field-level contracts: see JSON Schemas in `metaplus-core`
 
 ---
-# 2. Core Principles
 
-## Open Integration
+## 1. Mission
 
-Metaplus is open by design.
+Metaplus is an open and unified metadata platform for the AI era.
 
-- Any third-party system should be able to integrate
-- Integration should support real-time or scheduled synchronization
-- Interfaces should be stable, explicit, and easy to adopt
+Any external system should be able to define, connect, and synchronize metadata through Metaplus, either in real time or on a schedule.
 
-## Schema First
-
-Schemas define the contract.
-
-- JSON Schema is the source of truth
-- Definitions come before implementation
-- No field exists without schema
-- Schema evolution is additive
-
-## Stable Identity (FQMN)
-
-FQMN = `<domain>:<system>:<instance>:<entity>`
-
-- Identity must be globally unique
-- Identity should stay source-aligned and evolvable
-- All cross-system interoperability depends on stable identity
-
-Example: `data/table:mysql:main:warehouse.sales.orders`
-
-
-## Document-Based Model
-
-All metadata is represented as a `MetaplusDoc`.
-
-- Structure is fixed: idea / meta / plus / info
-- APIs operate on documents
-- Domain-specific meaning lives inside `meta` and `plus`
-
-
-## Meta vs Plus Separation
-
-Metaplus separates facts from interpretation.
-
-- `meta` stores synchronized, source-of-truth metadata
-- `plus` stores derived, human-authored, or AI-generated extensions
-- `plus` may enrich `meta`, but must not replace or blur source facts
-- This boundary is fundamental and must remain clear
-
-## General Platform, Data Focus
-
-Metaplus is a general metadata platform, currently focused on the data domain.
-
-- The platform model should work beyond the data domain
-- The current priority is to help people and agents manage and use data with clarity, confidence, and control
-- Designs should favor generality without weakening data-domain depth
-
-## AI Native
-
-Metaplus is designed for AI from the beginning.
-
-- Metadata should be ready for MCP, skills, and AI clients
-- Human and agent collaboration should be a first-class workflow
-- The platform should enable understanding, automation, and coordinated action
+The current product focus is the data domain, but the platform model should remain general enough to evolve beyond it.
 
 ---
-# 3. Constraints
 
-These are hard constraints, not suggestions.
+## 2. Project Principles
 
-## Design Constraints
-
-- Correctness over performance
-- Explicitness over hidden behavior
-- Simplicity over unnecessary abstraction
-- Openness over lock-in
-- Avoid unverified assumptions
-
-## Product Constraints
-
-- Onboarding should be simple: define schema, expose API, implement sync
-- External systems should integrate without bespoke coupling
-- Sync should support both scheduled and near-real-time models
-
-## No Schema Drift
-
-- No field without schema
-- No silent contract changes
-- No breaking changes without explicit migration strategy
+- **Correctness over performance**
+- **Explicitness over hidden behavior**
+- **Simplicity over unnecessary abstraction**
+- **Openness over lock-in**
+- **Validated assumptions over guesswork**
 
 ---
-# 4. How We Work
 
-- Start from schema and document contracts
-- Keep `meta` aligned with authoritative sources
-- Keep `plus` extensible without polluting source truth
-- Design APIs and sync flows for external adoption
-- Prefer small, additive, explainable changes
-- Read existing tests and docs before implementation; if they do not exist, state that clearly
-- Maintain branch coverage at no less than 70%
-- Provide clear rationale for design decisions and trade-offs
+## 3. Contribution Rules
+
+When changing Metaplus, contributors should follow these rules:
+
+1. Start from schema and document contracts before implementation.
+2. Keep `meta` aligned with authoritative sources.
+3. Keep `plus` extensible, but separate from source truth.
+4. Prefer small, additive, explainable changes.
+5. Do not introduce undocumented fields or silent contract changes.
+6. Read existing docs and tests before implementation; if they do not exist, state that clearly.
+7. Maintain branch coverage at **70% or higher**.
+8. Make design decisions and trade-offs explicit.
 
 ---
-# 5. Reference Documents
 
-- `AGENTS.md` -> project mission and working rules
-- `SPEC.md` -> system rules
-- `ARCHITECTURE.md` -> module design
-- JSON Schemas -> data model contracts
+## 4. Document Ownership
 
-When present, these documents are authoritative.
+Each top-level document has a different responsibility:
+
+- `AGENTS.md`: mission, principles, and contributor workflow
+- `SPEC.md`: normative rules and invariants of the platform
+- `ARCHITECTURE.md`: module structure, boundaries, and dependency model
+- JSON Schemas: canonical field-level contracts
+
+If documents overlap, prefer the more specific one for that concern.
+
+---
+
+## 5. Current Delivery Posture
+
+Metaplus may evolve module by module.
+
+At the current stage, some modules already exist and others are planned. This is acceptable as long as new work respects:
+
+- the invariants in `SPEC.md`
+- the boundaries in `ARCHITECTURE.md`
+- the contracts in JSON Schema

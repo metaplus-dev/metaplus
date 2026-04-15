@@ -35,67 +35,77 @@ import java.util.function.Supplier;
  * Authentication is configured once here so backend stores do not need to know
  * whether Elasticsearch uses no auth, basic auth, bearer token auth, or API key auth.
  *
- * <p>Supported properties and equivalent environment variable names:</p>
- * <ul>
- *   <li>{@code metaplus.backend.es.baseUrl} -> {@code METAPLUS_BACKEND_ES_BASEURL}</li>
- *   <li>{@code metaplus.backend.es.auth.type} -> {@code METAPLUS_BACKEND_ES_AUTH_TYPE}</li>
- *   <li>{@code metaplus.backend.es.auth.username} -> {@code METAPLUS_BACKEND_ES_AUTH_USERNAME}</li>
- *   <li>{@code metaplus.backend.es.auth.password} -> {@code METAPLUS_BACKEND_ES_AUTH_PASSWORD}</li>
- *   <li>{@code metaplus.backend.es.auth.bearerToken} -> {@code METAPLUS_BACKEND_ES_AUTH_BEARERTOKEN}</li>
- *   <li>{@code metaplus.backend.es.auth.apiKey} -> {@code METAPLUS_BACKEND_ES_AUTH_APIKEY}</li>
- *   <li>{@code metaplus.backend.es.tls.trustStorePath} -> {@code METAPLUS_BACKEND_ES_TLS_TRUSTSTOREPATH}</li>
- *   <li>{@code metaplus.backend.es.tls.trustStorePassword} -> {@code METAPLUS_BACKEND_ES_TLS_TRUSTSTOREPASSWORD}</li>
- *   <li>{@code metaplus.backend.es.tls.trustStoreType} -> {@code METAPLUS_BACKEND_ES_TLS_TRUSTSTORETYPE}</li>
- *   <li>{@code metaplus.backend.es.tls.keyStorePath} -> {@code METAPLUS_BACKEND_ES_TLS_KEYSTOREPATH}</li>
- *   <li>{@code metaplus.backend.es.tls.keyStorePassword} -> {@code METAPLUS_BACKEND_ES_TLS_KEYSTOREPASSWORD}</li>
- *   <li>{@code metaplus.backend.es.tls.keyPassword} -> {@code METAPLUS_BACKEND_ES_TLS_KEYPASSWORD}</li>
- *   <li>{@code metaplus.backend.es.tls.keyStoreType} -> {@code METAPLUS_BACKEND_ES_TLS_KEYSTORETYPE}</li>
- * </ul>
+ * <p>Configuration is injected from the {@code metaplus.backend.es.*} prefix.</p>
  */
 @Slf4j
 @Component
 public class EsClient {
 
-    @Value("${metaplus.backend.es.baseUrl:}")
-    private String baseUrl;
+    private final String baseUrl;
 
-    @Value("${metaplus.backend.es.auth.type:none}")
-    private String authType;
+    private final String authType;
 
-    @Value("${metaplus.backend.es.auth.username:}")
-    private String authUsername;
+    private final String authUsername;
 
-    @Value("${metaplus.backend.es.auth.password:}")
-    private String authPassword;
+    private final String authPassword;
 
-    @Value("${metaplus.backend.es.auth.bearerToken:}")
-    private String authBearerToken;
+    private final String authBearerToken;
 
-    @Value("${metaplus.backend.es.auth.apiKey:}")
-    private String authApiKey;
+    private final String authApiKey;
 
-    @Value("${metaplus.backend.es.tls.trustStorePath:}")
-    private String tlsTrustStorePath;
+    private final String tlsTrustStorePath;
 
-    @Value("${metaplus.backend.es.tls.trustStorePassword:}")
-    private String tlsTrustStorePassword;
+    private final String tlsTrustStorePassword;
 
-    @Value("${metaplus.backend.es.tls.trustStoreType:PKCS12}")
-    private String tlsTrustStoreType;
+    private final String tlsTrustStoreType;
 
-    @Value("${metaplus.backend.es.tls.keyStorePath:}")
-    private String tlsKeyStorePath;
+    private final String tlsKeyStorePath;
 
-    @Value("${metaplus.backend.es.tls.keyStorePassword:}")
-    private String tlsKeyStorePassword;
+    private final String tlsKeyStorePassword;
 
-    @Value("${metaplus.backend.es.tls.keyPassword:}")
-    private String tlsKeyPassword;
+    private final String tlsKeyPassword;
 
-    @Value("${metaplus.backend.es.tls.keyStoreType:PKCS12}")
-    private String tlsKeyStoreType;
+    private final String tlsKeyStoreType;
 
     private volatile RestClient restClient;
+
+    public EsClient(@Value("${metaplus.backend.es.baseUrl:}") String baseUrl,
+                    @Value("${metaplus.backend.es.auth.type:none}") String authType,
+                    @Value("${metaplus.backend.es.auth.username:}") String authUsername,
+                    @Value("${metaplus.backend.es.auth.password:}") String authPassword,
+                    @Value("${metaplus.backend.es.auth.bearerToken:}") String authBearerToken,
+                    @Value("${metaplus.backend.es.auth.apiKey:}") String authApiKey,
+                    @Value("${metaplus.backend.es.tls.trustStorePath:}") String tlsTrustStorePath,
+                    @Value("${metaplus.backend.es.tls.trustStorePassword:}") String tlsTrustStorePassword,
+                    @Value("${metaplus.backend.es.tls.trustStoreType:PKCS12}") String tlsTrustStoreType,
+                    @Value("${metaplus.backend.es.tls.keyStorePath:}") String tlsKeyStorePath,
+                    @Value("${metaplus.backend.es.tls.keyStorePassword:}") String tlsKeyStorePassword,
+                    @Value("${metaplus.backend.es.tls.keyPassword:}") String tlsKeyPassword,
+                    @Value("${metaplus.backend.es.tls.keyStoreType:PKCS12}") String tlsKeyStoreType) {
+        this.baseUrl = baseUrl;
+        this.authType = authType;
+        this.authUsername = authUsername;
+        this.authPassword = authPassword;
+        this.authBearerToken = authBearerToken;
+        this.authApiKey = authApiKey;
+        this.tlsTrustStorePath = tlsTrustStorePath;
+        this.tlsTrustStorePassword = tlsTrustStorePassword;
+        this.tlsTrustStoreType = tlsTrustStoreType;
+        this.tlsKeyStorePath = tlsKeyStorePath;
+        this.tlsKeyStorePassword = tlsKeyStorePassword;
+        this.tlsKeyPassword = tlsKeyPassword;
+        this.tlsKeyStoreType = tlsKeyStoreType;
+    }
+
+    public EsClient(String baseUrl) {
+        this(baseUrl, "none", "", "", "", "", "", "", "PKCS12", "", "", "", "PKCS12");
+    }
+
+    public EsClient(String baseUrl, String authType, String authUsername, String authPassword,
+                    String authBearerToken, String authApiKey) {
+        this(baseUrl, authType, authUsername, authPassword, authBearerToken, authApiKey,
+                "", "", "PKCS12", "", "", "", "PKCS12");
+    }
 
     private RestClient getRestClient() {
         if (restClient != null) {

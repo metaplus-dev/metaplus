@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -17,18 +16,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class RuntimeStateStoreIT extends EsIntegrationTestSupport {
 
-    private static final String RUNTIME_INDEX_RESOURCE = "es/" + RuntimeStateStore.INDEX_NAME + ".json";
+    private static final String RUNTIME_INDEX_NAME = "i_metaplus_runtime";
+    private static final String RUNTIME_INDEX_RESOURCE = "es/i_metaplus_runtime.json";
 
     private String indexName;
     private RuntimeStateStore store;
 
     @BeforeEach
     void setUpStore() {
-        indexName = uniqueIndexName(RuntimeStateStore.INDEX_NAME);
+        indexName = uniqueIndexName(RUNTIME_INDEX_NAME);
         recreateIndex(indexName, RUNTIME_INDEX_RESOURCE);
-        store = new RuntimeStateStore();
-        ReflectionTestUtils.setField(store, "esClient", esClient);
-        ReflectionTestUtils.setField(store, "indexName", indexName);
+        store = new RuntimeStateStore(esClient, indexName);
     }
 
     @AfterEach

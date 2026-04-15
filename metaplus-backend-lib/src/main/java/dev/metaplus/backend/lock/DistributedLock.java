@@ -8,7 +8,7 @@ import dev.metaplus.core.util.EnvUtil;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.sjf4j.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -19,16 +19,15 @@ import java.time.Instant;
 @Component
 public class DistributedLock {
 
-    public static final String INDEX_NAME = "i_metaplus_lock";
-    public static final String INDEX_CONFIG_FILE = "es/" + INDEX_NAME + ".json";
+    private final EsClient esClient;
 
-    @Autowired
-    protected EsClient esClient;
+    private final String indexName;
 
-    private static final int DEFAULT_LOCK_TIME_SECONDS = 60;
-
-    public boolean lock(@NonNull String lockId) {
-        return lock(lockId, DEFAULT_LOCK_TIME_SECONDS);
+    public DistributedLock(EsClient esClient,
+                           @Value("${metaplus.backend.es.indices.lock:i_metaplus_lock}")
+                           String indexName) {
+        this.esClient = esClient;
+        this.indexName = indexName;
     }
 
     public boolean lock(@NonNull String lockId, int lockTimeSeconds) {
@@ -41,7 +40,7 @@ public class DistributedLock {
         }
 
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
-                .build(INDEX_NAME, lockId);
+                .build(indexName(), lockId);
         EsResponse response = esClient.get(uri);
         if (response.isSuccess()) {
             Instant now = Instant.now();
@@ -59,7 +58,7 @@ public class DistributedLock {
             URI uri2 = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
                     .queryParam("if_seq_no", seqNo)
                     .queryParam("if_primary_term", primaryTerm)
-                    .build(INDEX_NAME, lockId);
+                    .build(indexName(), lockId);
             EsResponse response2 = esClient.put(uri2, JsonObject.of(
                     "lockedBy", lockedBy,
                     "lockedAt", DateUtil.format(now),
@@ -74,7 +73,7 @@ public class DistributedLock {
             Instant now = Instant.now();
             URI uri2 = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
                     .queryParam("op_type", "create")
-                    .build(INDEX_NAME, lockId);
+                    .build(indexName(), lockId);
             EsResponse response2 = esClient.put(uri2, JsonObject.of(
                     "lockedBy", lockedBy,
                     "lockedAt", DateUtil.format(now),
@@ -98,7 +97,7 @@ public class DistributedLock {
 
     public void release(@NonNull String lockId, @NonNull String lockedBy) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
-                .build(INDEX_NAME, lockId);
+                .build(indexName(), lockId);
         EsResponse response = esClient.get(uri);
         if (response.isSuccess()) {
             String owner = response.getBody().getStringByPath("$._source.lockedBy");
@@ -111,7 +110,7 @@ public class DistributedLock {
                     URI uri2 = UriComponentsBuilder.fromPath("/{index}/_update/{lockId}")
                             .queryParam("if_seq_no", seqNo)
                             .queryParam("if_primary_term", primaryTerm)
-                            .build(INDEX_NAME, lockId);
+                            .build(indexName(), lockId);
                     EsResponse response2 = esClient.post(uri2, JsonObject.of("doc", JsonObject.of(
                             "isReleased", true,
                             "releasedAt", DateUtil.format(now)
@@ -146,6 +145,10 @@ public class DistributedLock {
                     + expiredAt + "'.", e);
         }
         return !expiredAtInstant.isBefore(now);
+    }
+
+    private String indexName() {
+        return indexName;
     }
 
 

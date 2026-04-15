@@ -11,7 +11,7 @@ import java.time.Instant;
 
 /**
  * Schema:
- *
+ * <p>
  * {
  *     "idea": {
  *         "fqmn": "...",
@@ -50,22 +50,6 @@ public class MetaplusDoc extends JsonObject {
     protected Info info;
 
     // Idea
-
-    /**
-     *
-     * FQMN = <domain>:<system>:<instance>:<entity>
-     *
-     * Example:
-     *  data/table:mysql:main:sales.orders
-     */
-    @Getter @Setter
-    public static class Idea extends JsonObject {
-        private String fqmn;
-        private String domain;
-        private String system;
-        private String instance;
-        private String entity;
-    }
 
     public String getIdeaFqmn() {
         return idea.getFqmn();

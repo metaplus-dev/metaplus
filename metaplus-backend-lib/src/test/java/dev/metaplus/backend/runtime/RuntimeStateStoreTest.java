@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -23,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RuntimeStateStoreTest {
+
+    private static final String INDEX_NAME = "i_metaplus_runtime";
 
     private HttpServer server;
     private String baseUrl;
@@ -45,7 +46,7 @@ class RuntimeStateStoreTest {
     void markJobCompletedUsesJobSpecificFieldWithUpsert() throws Exception {
         AtomicReference<String> methodRef = new AtomicReference<>();
         AtomicReference<JsonObject> bodyRef = new AtomicReference<>();
-        server.createContext("/" + RuntimeStateStore.INDEX_NAME + "/_update/data:system:instance:entity", exchange -> {
+        server.createContext("/" + INDEX_NAME + "/_update/data:system:instance:entity", exchange -> {
             methodRef.set(exchange.getRequestMethod());
             bodyRef.set(readJsonBody(exchange));
             respond(exchange, 200, "{\"result\":\"updated\"}", "application/json");
@@ -68,7 +69,7 @@ class RuntimeStateStoreTest {
     void searchPendingByJobBuildsPendingSearchWithStablePaging() throws Exception {
         AtomicReference<String> methodRef = new AtomicReference<>();
         AtomicReference<SearchRequest> requestRef = new AtomicReference<>();
-        server.createContext("/" + RuntimeStateStore.INDEX_NAME + "/_search", exchange -> {
+        server.createContext("/" + INDEX_NAME + "/_search", exchange -> {
             methodRef.set(exchange.getRequestMethod());
             requestRef.set(readBody(exchange, SearchRequest.class));
             respond(exchange, 200, "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}", "application/json");
@@ -95,7 +96,7 @@ class RuntimeStateStoreTest {
 
     @Test
     void getReturnsNullWhenDocumentIsMissing() {
-        server.createContext("/" + RuntimeStateStore.INDEX_NAME + "/_doc/data:system:instance:entity",
+        server.createContext("/" + INDEX_NAME + "/_doc/data:system:instance:entity",
                 exchange -> respond(exchange, 404, "{}", "application/json"));
 
         RuntimeStateStore store = newStore();
@@ -107,7 +108,7 @@ class RuntimeStateStoreTest {
     void clearByDomainUsesDeleteByQueryWithDomainFilter() throws Exception {
         AtomicReference<String> methodRef = new AtomicReference<>();
         AtomicReference<SearchRequest> requestRef = new AtomicReference<>();
-        server.createContext("/" + RuntimeStateStore.INDEX_NAME + "/_delete_by_query", exchange -> {
+        server.createContext("/" + INDEX_NAME + "/_delete_by_query", exchange -> {
             methodRef.set(exchange.getRequestMethod());
             requestRef.set(readBody(exchange, SearchRequest.class));
             respond(exchange, 200, "{\"deleted\":2,\"total\":2}", "application/json");
@@ -121,11 +122,8 @@ class RuntimeStateStoreTest {
     }
 
     private RuntimeStateStore newStore() {
-        EsClient client = new EsClient();
-        ReflectionTestUtils.setField(client, "baseUrl", baseUrl);
-        RuntimeStateStore store = new RuntimeStateStore();
-        ReflectionTestUtils.setField(store, "esClient", client);
-        return store;
+        EsClient client = new EsClient(baseUrl);
+        return new RuntimeStateStore(client, INDEX_NAME);
     }
 
     private static String readBody(HttpExchange exchange) throws IOException {

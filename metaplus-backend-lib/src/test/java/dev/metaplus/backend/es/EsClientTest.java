@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -172,9 +171,8 @@ class EsClientTest {
 
     @Test
     void invalidTlsTrustStorePathFailsFast() {
-        EsClient client = newClient();
-        ReflectionTestUtils.setField(client, "tlsTrustStorePath", "/tmp/metaplus-missing-truststore.p12");
-        ReflectionTestUtils.setField(client, "tlsTrustStorePassword", "secret");
+        EsClient client = new EsClient(baseUrl, "none", null, null, null, null,
+                "/tmp/metaplus-missing-truststore.p12", "secret", "PKCS12", "", "", "", "PKCS12");
 
         EsClientException exception = assertThrows(EsClientException.class,
                 () -> client.get(URI.create("/metrics")));
@@ -187,14 +185,7 @@ class EsClientTest {
     }
 
     private EsClient newClient(String authType, String username, String password, String bearerToken, String apiKey) {
-        EsClient client = new EsClient();
-        ReflectionTestUtils.setField(client, "baseUrl", baseUrl);
-        ReflectionTestUtils.setField(client, "authType", authType);
-        ReflectionTestUtils.setField(client, "authUsername", username);
-        ReflectionTestUtils.setField(client, "authPassword", password);
-        ReflectionTestUtils.setField(client, "authBearerToken", bearerToken);
-        ReflectionTestUtils.setField(client, "authApiKey", apiKey);
-        return client;
+        return new EsClient(baseUrl, authType, username, password, bearerToken, apiKey);
     }
 
     private static String readBody(HttpExchange exchange) throws IOException {

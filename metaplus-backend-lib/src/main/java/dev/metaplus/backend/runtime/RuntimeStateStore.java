@@ -14,7 +14,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -23,22 +23,22 @@ import java.net.URI;
 @Slf4j
 @Component
 public class RuntimeStateStore {
+    private final EsClient esClient;
+    private final String indexName;
 
-    /** Runtime state is stored in a dedicated sidecar index keyed by FQMN. */
-    public static final String INDEX_NAME = "i_metaplus_runtime";
-
-    /** Allows integration tests to isolate writes into a dedicated index. */
-    private String indexName = INDEX_NAME;
-
-    @Autowired
-    private EsClient esClient;
+    public RuntimeStateStore(EsClient esClient,
+                             @Value("${metaplus.backend.es.indices.runtime-state:i_metaplus_runtime}")
+                             String indexName) {
+        this.esClient = esClient;
+        this.indexName = indexName;
+    }
 
     /**
      * Reads the runtime sidecar state for one FQMN.
      */
     public RuntimeState get(@NonNull String fqmn) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{fqmn}")
-                .build(indexName, fqmn);
+                .build(indexName(), fqmn);
 
         EsResponse response = esClient.get(uri);
         if (response.isNotFound()) {
@@ -80,7 +80,7 @@ public class RuntimeStateStore {
                                                            int size,
                                                            JsonArray searchAfter) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_search")
-                .build(indexName);
+                .build(indexName());
 
         String completedAtFieldName = jobType.completedAtFieldName();
 
@@ -125,7 +125,7 @@ public class RuntimeStateStore {
      */
     public Result clearByDomain(@NonNull String domainName) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query")
-                .build(indexName);
+                .build(indexName());
 
         Query query = new Query();
         query.addBoolFilterTerm("domain", domainName);
@@ -144,7 +144,7 @@ public class RuntimeStateStore {
 
     private void setField(@NonNull String fqmn, @NonNull String fieldName, @NonNull Object fieldValue) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}")
-                .build(indexName, fqmn);
+                .build(indexName(), fqmn);
 
         JsonObject body = JsonObject.of(
                 "doc", JsonObject.of(
@@ -157,6 +157,10 @@ public class RuntimeStateStore {
             throw new BackendException("setField fqmn=" + fqmn + ", fieldName=" + fieldName + ", fieldValue=" +
                     fieldValue + " failed. Es.res code:" + response.getStatusCode() + ", body: " + response.getBody());
         }
+    }
+
+    private String indexName() {
+        return indexName;
     }
 
 
