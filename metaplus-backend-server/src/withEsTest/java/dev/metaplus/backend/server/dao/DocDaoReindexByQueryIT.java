@@ -1,4 +1,4 @@
-package dev.metaplus.backend.server.doc;
+package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.server.domain.StorageUtil;
 import dev.metaplus.backend.server.domain.ValuesStore;

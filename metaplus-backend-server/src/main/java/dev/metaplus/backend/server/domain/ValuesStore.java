@@ -115,10 +115,10 @@ public class ValuesStore {
     private final Map<String, DerivedScriptCacheEntry> domainDerivedScriptCache = new ConcurrentHashMap<>();
 
     public void putFromDomainDoc(DomainDoc domainDoc) {
-        putFromSchema(domainDoc.getMetaDomainName(), domainDoc.getMetaStorageMappings());
+        putFromMappings(domainDoc.getMetaDomainName(), domainDoc.getMetaStorageMappings());
     }
 
-    public void putFromSchema(String domain, JsonObject mappings) {
+    public void putFromMappings(String domain, JsonObject mappings) {
         Map<String, String> valueExprs = new LinkedHashMap<>();
         if (mappings != null) {
             mappings.walk(Nodes.WalkTarget.CONTAINER, Nodes.WalkOrder.TOP_DOWN, -1, (path, node) -> {

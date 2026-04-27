@@ -1,4 +1,4 @@
-package dev.metaplus.backend.server.doc;
+package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;

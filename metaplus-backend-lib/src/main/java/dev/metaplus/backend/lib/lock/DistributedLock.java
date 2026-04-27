@@ -84,8 +84,7 @@ public class DistributedLock {
             return response2.isSuccess();
 
         } else {
-            throw new BackendException("DistributedLock.lock '" + lockId + "' fail. Es.res code:"
-                    + response.getStatusCode() + ", body:" + response.getBody());
+            throw failureWithEsResponse("lock", targetLock(lockId), response);
         }
 
     }
@@ -135,20 +134,37 @@ public class DistributedLock {
     private boolean isLockActive(@NonNull EsResponse response, @NonNull String lockId, @NonNull Instant now) {
         String expiredAt = response.getBody().getStringByPath("$._source.expiredAt");
         if (expiredAt == null) {
-            throw new BackendException("DistributedLock '" + lockId + "' has no expiredAt.");
+            throw failureWithReason("lock", targetLock(lockId), "missing expiredAt");
         }
         Instant expiredAtInstant;
         try {
             expiredAtInstant = DateUtil.parseCanonical(expiredAt);
         } catch (IllegalArgumentException e) {
-            throw new BackendException("DistributedLock '" + lockId + "' has non-canonical expiredAt '"
-                    + expiredAt + "'.", e);
+            throw new BackendException(buildReasonFailureMessage("lock", targetLock(lockId),
+                    "non-canonical expiredAt=" + expiredAt), e);
         }
         return !expiredAtInstant.isBefore(now);
     }
 
     private String indexName() {
         return indexName;
+    }
+
+    private String targetLock(String lockId) {
+        return "lockId=" + lockId;
+    }
+
+    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+        return new BackendException("DistributedLock." + operation + " failed: target=" + target
+                + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
+    }
+
+    private BackendException failureWithReason(String operation, String target, String reason) {
+        return new BackendException(buildReasonFailureMessage(operation, target, reason));
+    }
+
+    private String buildReasonFailureMessage(String operation, String target, String reason) {
+        return "DistributedLock." + operation + " failed: target=" + target + ", reason=" + reason;
     }
 
 

@@ -46,8 +46,7 @@ public class RuntimeStateStore {
         } else if (response.isSuccess()) {
             return response.getInBody("_source", RuntimeState.class);
         } else {
-            throw new BackendException("get fqmn=" + fqmn + " failed. Es.res code:" +
-                    response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("get", targetFqmn(fqmn), response);
         }
     }
 
@@ -110,9 +109,10 @@ public class RuntimeStateStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw new BackendException("searchPendingByJob() domain=" + domainName + ", jobType=" + jobType
-                    + ", lastCompletedAtEnd=" + lastCompletedAtEnd + ", size=" + size + ", searchAfter=" + searchAfter +
-                    " failed. Es.res code:" + response.getStatusCode() + ", body:" + response.getBody());
+            throw failureWithEsResponse("searchPendingByJob",
+                    "domain=" + domainName + ", jobType=" + jobType + ", lastCompletedAtEnd=" + lastCompletedAtEnd
+                            + ", size=" + size + ", searchAfter=" + searchAfter,
+                    response);
         }
 
         return response.getBodyAsSearchResponse(RuntimeState.class);
@@ -133,8 +133,7 @@ public class RuntimeStateStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw new BackendException("clearByDomain domain=" + domainName + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("clearByDomain", targetDomain(domainName), response);
         }
         return response.getResult();
     }
@@ -153,13 +152,27 @@ public class RuntimeStateStore {
                 "doc_as_upsert", true);
         EsResponse response = esClient.post(uri, body);
         if (!response.isSuccess()) {
-            throw new BackendException("setField fqmn=" + fqmn + ", fieldName=" + fieldName + ", fieldValue=" +
-                    fieldValue + " failed. Es.res code:" + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("setField",
+                    targetFqmn(fqmn) + ", fieldName=" + fieldName + ", fieldValue=" + fieldValue,
+                    response);
         }
     }
 
     private String indexName() {
         return indexName;
+    }
+
+    private String targetFqmn(String fqmn) {
+        return "fqmn=" + fqmn;
+    }
+
+    private String targetDomain(String domainName) {
+        return "domain=" + domainName;
+    }
+
+    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+        return new BackendException("RuntimeStateStore." + operation + " failed: target=" + target +
+                ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
 

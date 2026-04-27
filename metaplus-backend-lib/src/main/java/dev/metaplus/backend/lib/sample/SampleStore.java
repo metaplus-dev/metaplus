@@ -40,8 +40,7 @@ public class SampleStore {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(INDEX_SAMPLE);
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
-            throw new BackendException("Refresh failed. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("refresh", targetIndex(INDEX_SAMPLE), response);
         }
     }
 
@@ -58,8 +57,7 @@ public class SampleStore {
                 .build(INDEX_SAMPLE);
         EsResponse response = esClient.post(uri, sample);
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.post sample=" + sample + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("post", targetSample(sample), response);
         }
         return response.getOpResult();
     }
@@ -101,8 +99,7 @@ public class SampleStore {
 
         EsResponse response = esClient.bulk(bulkItemReqs);
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.post(dataList.size=" + dataList.size() + ") fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("postBatch", "fqmn=" + idea.getFqmn() + ", size=" + dataList.size(), response);
         }
         return response.getBulkResult();
     }
@@ -124,8 +121,7 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, search);
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.get fqmn=" + fqmn + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("get", targetFqmn(fqmn), response);
         }
 
         SearchResponse<Sample> sr = response.getBodyAsSearchResponse(Sample.class);
@@ -146,8 +142,7 @@ public class SampleStore {
         JsonObject body = JsonObject.of("doc", JsonObject.of("locked", locked));
         EsResponse response = esClient.post(uri, body);
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.lock fqmn=" + fqmn + " id=" + id +
-                    "fail. Es.res code:" + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("lock", targetFqmn(fqmn) + ", id=" + id, response);
         }
         return response.getOpResult();
     }
@@ -169,8 +164,7 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, search);
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.clear fqmn=" + fqmn + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("clear", targetFqmn(fqmn), response);
         }
         return response.getOpResult();
     }
@@ -191,10 +185,27 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, JsonObject.of("query", query, "script", script));
         if (!response.isSuccess()) {
-            throw new BackendException("SampleStore.rename oldFqmn=" + oldFqmn + " newFqmn=" + newIdea +
-                    "fail. Es.res code:" + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("rename", "oldFqmn=" + oldFqmn + ", newFqmn=" + newIdea.getFqmn(), response);
         }
         return response.getOpResult();
+    }
+
+    private String targetIndex(String index) {
+        return "index=" + index;
+    }
+
+    private String targetFqmn(String fqmn) {
+        return "fqmn=" + fqmn;
+    }
+
+    private String targetSample(Sample sample) {
+        String fqmn = sample.getIdea() == null ? null : sample.getIdea().getFqmn();
+        return fqmn == null ? "sample" : "fqmn=" + fqmn;
+    }
+
+    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+        return new BackendException("SampleStore." + operation + " failed: target=" + target +
+                ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
 

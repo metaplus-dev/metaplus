@@ -45,8 +45,7 @@ public class MetricStore {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(indexName());
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
-            throw new BackendException("Refresh failed. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("refresh", targetIndex(indexName()), response);
         }
     }
 
@@ -58,8 +57,7 @@ public class MetricStore {
                 .build(indexName(), genMetricIdHash(metric));
         EsResponse response = esClient.put(uri, metric);
         if (!response.isSuccess()) {
-            throw new BackendException("MetricStore.post metric=" + metric + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("post", targetMetric(metric), response);
         }
         return response.getResult();
     }
@@ -73,8 +71,7 @@ public class MetricStore {
         });
         EsResponse response = esClient.bulk(bulkItemReqs);
         if (!response.isSuccess()) {
-            throw new BackendException("MetricStore.post(metrics.size=" + metrics.size() + ") fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("postBatch", "index=" + indexName() + ", size=" + metrics.size(), response);
         }
         return response.getBulkResult();
     }
@@ -93,8 +90,7 @@ public class MetricStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw new BackendException("MetricStore.get metricQuery=" + metricQuery + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("get", targetMetricQuery(metricQuery), response);
         }
 
         SearchResponse<Metric> sr = response.getBodyAsSearchResponse(Metric.class);
@@ -109,8 +105,7 @@ public class MetricStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw new BackendException("MetricStore.delete metricQuery=" + metricQuery + " fail. Es.res code:"
-                    + response.getStatusCode() + ", body: " + response.getBody());
+            throw failureWithEsResponse("delete", targetMetricQuery(metricQuery), response);
         }
         return response.getOpResult();
     }
@@ -171,6 +166,29 @@ public class MetricStore {
 
     private String indexName() {
         return indexName;
+    }
+
+    private String targetIndex(String index) {
+        return "index=" + index;
+    }
+
+    private String targetMetric(Metric metric) {
+        return "metricId=" + genMetricIdHash(metric);
+    }
+
+    private String targetMetricQuery(MetricQuery metricQuery) {
+        return "metricName=" + metricQuery.getMetricName()
+                + ", assetName=" + metricQuery.getAssetName()
+                + ", period=" + metricQuery.getPeriod()
+                + ", startedAtStart=" + metricQuery.getStartedAtStart()
+                + ", startedAtEnd=" + metricQuery.getStartedAtEnd()
+                + ", from=" + metricQuery.getFrom()
+                + ", size=" + metricQuery.getSize();
+    }
+
+    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+        return new BackendException("MetricStore." + operation + " failed: target=" + target +
+                ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
 

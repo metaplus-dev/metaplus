@@ -2,6 +2,7 @@ package dev.metaplus.backend.lib.runtime;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import dev.metaplus.backend.lib.BackendException;
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.core.json.Jsons;
 import dev.metaplus.core.model.search.SearchRequest;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RuntimeStateStoreTest {
@@ -120,6 +122,20 @@ class RuntimeStateStoreTest {
 
         assertEquals("POST", methodRef.get());
         assertTrue(Jsons.toJsonString(requestRef.get().getQuery()).contains("\"idea.domain\":\"data\""));
+    }
+
+    @Test
+    void getUsesNormalizedFailureMessage() {
+        server.createContext("/" + INDEX_NAME + "/_doc/data:system:instance:entity",
+                exchange -> respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
+
+        RuntimeStateStore store = newStore();
+
+        BackendException ex = assertThrows(BackendException.class,
+                () -> store.get("data:system:instance:entity"));
+
+        assertEquals("RuntimeStateStore.get failed: target=fqmn=data:system:instance:entity, status=500, body=J{error=boom}",
+                ex.getMessage());
     }
 
     private RuntimeStateStore newStore() {

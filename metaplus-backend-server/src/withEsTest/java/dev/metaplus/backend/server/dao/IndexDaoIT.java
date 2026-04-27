@@ -1,4 +1,4 @@
-package dev.metaplus.backend.server.doc;
+package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.server.BackendServerException;
 import dev.metaplus.backend.server.es.EsIntegrationTestSupport;
