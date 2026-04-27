@@ -4,17 +4,11 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7" apply false
 }
 
-subprojects {
+allprojects {
+    group = "dev.metaplus"
+    version = Versions.metaplus
+}
 
-    repositories {
-        maven {
-            name = "Central Portal Snapshots"
-            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-            mavenContent {
-                snapshotsOnly()
-            }
-        }
-        mavenCentral()
-    }
-
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }

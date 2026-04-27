@@ -7,7 +7,7 @@ It does not define the normative system contract or module structure.
 
 - For system rules: see `SPEC.md`
 - For module boundaries and dependencies: see `ARCHITECTURE.md`
-- For field-level contracts: see JSON Schemas in `metaplus-core`
+- For field-level contracts: see built-in JSON Schemas in `metaplus-core` and schemas referenced or embedded by domain definitions
 
 ---
 
@@ -53,7 +53,7 @@ Each top-level document has a different responsibility:
 - `AGENTS.md`: mission, principles, and contributor workflow
 - `SPEC.md`: normative rules and invariants of the platform
 - `ARCHITECTURE.md`: module structure, boundaries, and dependency model
-- JSON Schemas: canonical field-level contracts
+- JSON Schemas and domain-carried schemas: canonical field-level contracts
 
 If documents overlap, prefer the more specific one for that concern.
 
@@ -67,4 +67,4 @@ At the current stage, some modules already exist and others are planned. This is
 
 - the invariants in `SPEC.md`
 - the boundaries in `ARCHITECTURE.md`
-- the contracts in JSON Schema
+- the contracts in JSON Schema and domain definitions

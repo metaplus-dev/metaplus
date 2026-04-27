@@ -18,7 +18,7 @@ import org.sjf4j.annotation.schema.ValidJsonSchema;
  *
  */
 @Getter @Setter
-@ValidJsonSchema(ref = "patch-response.json")
+@ValidJsonSchema(ref = "patch_response.json")
 public class PatchResponse extends JsonObject {
 
     private final int code;

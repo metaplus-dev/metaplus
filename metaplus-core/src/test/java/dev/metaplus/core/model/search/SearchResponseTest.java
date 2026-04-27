@@ -50,7 +50,7 @@ class SearchResponseTest {
         assertEquals(2L, response.getTotal());
         assertEquals(1.5, response.getMaxScore());
         assertEquals(2, response.getHitsSize());
-        assertEquals("data:mysql:main:warehouse.sales.orders", response.getHitsSource(0).getIdeaFqmn());
+        assertEquals("data:mysql:main:warehouse.sales.orders", response.getHit(0).getSource().getIdeaFqmn());
         assertEquals("doc-2", response.getHits().get(1).getInnerId());
     }
 

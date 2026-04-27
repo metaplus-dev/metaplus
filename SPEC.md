@@ -11,7 +11,7 @@ Module structure and packaging decisions belong in `ARCHITECTURE.md`.
 
 The following sources are authoritative, in this order:
 
-1. JSON Schemas for field-level contracts
+1. JSON Schemas for field-level contracts, including built-in schema resources and schemas carried by domain definitions
 2. `SPEC.md` for platform invariants and semantic rules
 3. `ARCHITECTURE.md` for module boundaries and dependency design
 4. `AGENTS.md` for project mission and contribution workflow
@@ -51,7 +51,7 @@ A `MetaplusDoc` has four top-level sections:
 - `idea`
 - `meta`
 - `plus`
-- `info`
+- `edit`
 
 ### 3.1 `idea`
 
@@ -79,11 +79,11 @@ Rules:
 - it must not replace or blur the meaning of `meta`
 - it must remain schema-defined when persisted
 
-### 3.4 `info`
+### 3.4 `edit`
 
-`info` contains operational bookkeeping associated with the document itself, such as internal identifiers and version tracking.
+`edit` contains document-level edit bookkeeping for `meta` and `plus`, such as section versions, creation timestamps, update timestamps, and actors.
 
-It is not the place for general workflow state or orchestration state.
+It is not the place for general workflow state, orchestration state, or backend-specific storage metadata.
 
 ---
 
@@ -98,7 +98,17 @@ Rules:
 3. An FQMN must not be reused for a different source object.
 4. Cross-system linking, synchronization, runtime tracking, and orchestration should all use FQMN as the primary logical key.
 
-### 4.1 Rename Rules
+### 4.1 Identity Derivation Rules
+
+Rules:
+
+1. `idea` is the identity root and must be derivable without reading persisted `meta` or `plus`.
+2. `meta` and `plus` may reference `idea`, but `idea` must not depend on `meta` or `plus`.
+3. Identity generators may use only declared source-identity inputs and constants.
+4. Identity generation must be deterministic for the same declared inputs.
+5. Rename behavior must remain explicit and explainable from the identity contract.
+
+### 4.2 Rename Rules
 
 Rules:
 
@@ -142,10 +152,23 @@ JSON Schema is the source of truth for persisted structure.
 Rules:
 
 1. No persisted field may exist without schema.
-2. No silent contract change is allowed.
-3. Additive evolution is the default path.
-4. Breaking changes require an explicit migration or versioning strategy.
-5. Validation should happen as close to system boundaries as practical.
+2. Domain-specific schema may be supplied either by a built-in `schemaRef` or by an inline schema embedded in the domain definition.
+3. Inline schema must be stored as JSON object content, not as an opaque string payload.
+4. Built-in shared envelopes such as `MetaplusDoc` should remain stable reusable schemas.
+5. No silent contract change is allowed.
+6. Additive evolution is the default path.
+7. Breaking changes require an explicit migration or versioning strategy.
+8. Validation should happen as close to system boundaries as practical.
+
+### 6.1 Domain Contract Validation
+
+Rules:
+
+1. A domain definition must declare the identity contract, storage contract, and schema entry used by that domain.
+2. Storage may be drafted before schema, but a domain must not become active until schema validity and schema-storage cross-validation both pass.
+3. Schema is authoritative for logical field existence and basic type.
+4. Storage contracts must not redefine logical field existence or basic types already defined by schema.
+5. Storage references to fields must resolve against the effective schema of the domain.
 
 ---
 
@@ -195,6 +218,10 @@ Rules:
 2. Platform integrations should prefer stable APIs over storage-specific access.
 3. External adopters should not need bespoke coupling to internal backend storage.
 4. Query, patch, metric, and related shared models should remain consistent across modules.
+5. Metaplus must not assume full Elasticsearch and OpenSearch feature parity.
+6. Backend storage integrations should use only the documented ES-compatible subset adopted by Metaplus.
+7. Any newly introduced engine feature must be verified against both supported engines before it becomes part of the platform contract.
+8. If a feature is not verified on both engines, it should be treated as unsupported by default.
 
 ---
 
@@ -218,7 +245,7 @@ An implementation is conformant when it:
 
 - respects the `MetaplusDoc` contract
 - respects FQMN identity rules
-- preserves the `meta` / `plus` separation
+- preserves the responsibilities of `idea`, `meta`, `plus`, and `edit`
 - avoids schema drift
 - keeps runtime state separate from canonical meaning
 - updates schemas, docs, and tests together when contracts change

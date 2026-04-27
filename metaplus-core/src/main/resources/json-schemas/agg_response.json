@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/agg_response.json",
+  "title": "AggResponse",
+  "description": "Aggregation API response payload.",
+  "type": "object",
+  "properties": {
+    "aggregations": {
+      "description": "Aggregation results keyed by aggregation name.",
+      "additionalProperties": { "$ref": "#/$defs/aggregation" }
+    }
+  },
+  "$defs": {
+    "aggregation": {
+      "title": "AggregationResult",
+      "description": "One aggregation result which may contain metric values, document counts, or buckets.",
+      "type": "object",
+      "properties": {
+        "doc_count": {
+          "type": "integer"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "null" }
+          ]
+        },
+        "buckets": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/$defs/bucket" }
+            },
+            {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/bucket" }
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "bucket": {
+      "title": "AggregationBucket",
+      "description": "One bucket in a bucket-style aggregation result.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" }
+          ]
+        },
+        "key_as_string": { "type": "string" },
+        "doc_count": { "type": "integer" }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/aggregation"
+      }
+    }
+  }
+}

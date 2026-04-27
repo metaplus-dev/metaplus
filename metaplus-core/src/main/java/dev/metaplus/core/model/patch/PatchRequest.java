@@ -1,7 +1,7 @@
 package dev.metaplus.core.model.patch;
 
 import dev.metaplus.core.model.MetaplusDoc;
-import dev.metaplus.core.model.query.Query;
+import dev.metaplus.core.model.search.Query;
 import lombok.Getter;
 import lombok.Setter;
 import org.sjf4j.JsonObject;
@@ -22,7 +22,7 @@ import java.time.Instant;
  *         "idea": {...},
  *         "meta": {...},
  *         "plus": {...},
- *         "info": {...}
+ *         "edit": {...}
  *     },
  *     "query": {...},
  *     "script": {
@@ -33,7 +33,7 @@ import java.time.Instant;
  *
  */
 @Getter @Setter
-@ValidJsonSchema(ref = "patch-request.json")
+@ValidJsonSchema(ref = "patch_request.json")
 public class PatchRequest extends JsonObject {
 
     private PatchMethod method;

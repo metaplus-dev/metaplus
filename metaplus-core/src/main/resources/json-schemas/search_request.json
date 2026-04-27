@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/search_request.json",
+  "title": "SearchRequest",
+  "description": "Search API request payload.",
+  "type": "object",
+  "properties": {
+    "domains": {
+      "description": "Optional domain filter for multi-domain search requests.",
+      "$ref": "base.json#/$defs/domains"
+    },
+    "query": {
+      "description": "Search predicate applied to matching documents.",
+      "$ref": "base.json#/$defs/query"
+    },
+    "from": {
+      "description": "Offset-based pagination start position.",
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "size": {
+      "description": "Maximum number of hits to return.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000,
+      "default": 10
+    },
+    "sort": {
+      "description": "Sort clauses applied to the result set.",
+      "type": "array",
+      "items": {
+        "$ref": "base.json#/$defs/scalar"
+      }
+    },
+    "searchAfter": {
+      "description": "Cursor values used for stable deep pagination.",
+      "type": "array",
+      "items": {
+        "$ref": "base.json#/$defs/scalar"
+      },
+      "minItems": 1
+    },
+    "fields": {
+      "description": "Optional stored or computed fields to return with each hit.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "highlight": {
+      "description": "Highlight configuration for matched text fields.",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": ["fields"],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

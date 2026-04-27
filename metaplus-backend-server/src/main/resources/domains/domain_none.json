@@ -1,0 +1,164 @@
+{
+  "idea": {
+    "fqmn": "domain:metaplus:main:none",
+    "domain": "domain",
+    "system": "metaplus",
+    "instance": "main",
+    "entity": "none"
+  },
+  "meta": {
+    "domain": {
+      "name": "none",
+      "desc": "The root template domain of all domains.",
+      "abstract": true,
+      "system": true
+    },
+    "storage": {
+      "mappings": {
+        "properties": {
+          "idea": {
+            "properties": {
+              "fqmn": {
+                "type": "keyword",
+                "$value": "${idea.domain}:${idea.system}:${idea.instance}:${idea.entity}"
+              },
+              "domain": {
+                "type": "keyword"
+              },
+              "system": {
+                "type": "keyword"
+              },
+              "instance": {
+                "type": "keyword"
+              },
+              "entity": {
+                "type": "keyword"
+              }
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "plus": {
+            "properties": {
+              "core": {
+                "properties": {
+                  "readme": {
+                    "type": "text"
+                  },
+                  "tags": {
+                    "type": "keyword"
+                  },
+                  "taxonomy": {
+                    "type": "text",
+                    "analyzer": "path_analyzer"
+                  },
+                  "criticality": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "edit": {
+            "properties": {
+              "meta": {
+                "properties": {
+                  "version": {
+                    "type": "integer"
+                  },
+                  "createdAt": {
+                    "type": "date"
+                  },
+                  "createdBy": {
+                    "type": "keyword"
+                  },
+                  "updatedAt": {
+                    "type": "date"
+                  },
+                  "updatedBy": {
+                    "type": "keyword"
+                  },
+                  "deletedAt": {
+                    "type": "date"
+                  },
+                  "deletedBy": {
+                    "type": "keyword"
+                  },
+                  "restoredAt": {
+                    "type": "date"
+                  },
+                  "restoredBy": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "plus": {
+                "properties": {
+                  "version": {
+                    "type": "integer"
+                  },
+                  "updatedAt": {
+                    "type": "date"
+                  },
+                  "updatedBy": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "settings": {
+        "index": {
+          "refresh_interval": "1s"
+        },
+        "analysis": {
+          "char_filter": {
+            "underscore": {
+              "type": "mapping",
+              "mappings": [
+                "_ => \\u0020",
+                ". => \\u0020"
+              ]
+            }
+          },
+          "normalizer": {
+            "default": {
+              "type": "custom",
+              "filter": [
+                "lowercase"
+              ]
+            }
+          },
+          "analyzer": {
+            "default": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "char_filter": [
+                "underscore"
+              ],
+              "filter": [
+                "lowercase"
+              ]
+            },
+            "path_analyzer": {
+              "tokenizer": "path_hierarchy"
+            }
+          }
+        }
+      }
+    },
+    "schema": {
+      "$ref": "https://metaplus.dev/json-schemas/metaplus_doc.json"
+    }
+  },
+  "plus": {},
+  "edit": {
+    "meta": {
+      "createdAt": "__createdAt__",
+      "createdBy": "__createdBy__"
+    }
+  }
+}

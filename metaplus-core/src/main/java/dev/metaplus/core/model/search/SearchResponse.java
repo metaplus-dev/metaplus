@@ -50,8 +50,8 @@ public class SearchResponse<T extends JsonObject> extends JsonObject {
         return hits == null ? 0 : hits.size();
     }
 
-    public T getHitsSource(int idx) {
-        return hits.get(idx).getSource();
+    public Hit<T> getHit(int index) {
+        return hits.get(index);
     }
 
     public List<T> getSources() {

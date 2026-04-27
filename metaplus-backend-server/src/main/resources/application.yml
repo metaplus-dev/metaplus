@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: metaplus-backend-server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -10,8 +10,8 @@ class PatchSchemaBindingTest {
 
     @Test
     void patchModelsBindToExpectedJsonSchemas() {
-        assertSchemaRef(PatchRequest.class, "patch-request.json");
-        assertSchemaRef(PatchResponse.class, "patch-response.json");
+        assertSchemaRef(PatchRequest.class, "patch_request.json");
+        assertSchemaRef(PatchResponse.class, "patch_response.json");
     }
 
     private static void assertSchemaRef(Class<?> type, String expectedRef) {

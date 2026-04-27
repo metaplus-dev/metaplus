@@ -71,6 +71,7 @@ These server modules are not yet formalized in the current repository, but they 
 
 - Canonical platform models
 - JSON Schema resources
+- Built-in domain contract resources and contract validation helpers
 - Shared query, patch, metric, search, and exception types
 - Common utilities and validation helpers
 
@@ -231,7 +232,9 @@ Additional guidance:
 
 Canonical metadata is stored as `MetaplusDoc`.
 
-This document is the shared platform unit for identity, source facts, enrichments, and metadata bookkeeping.
+This document is the shared platform unit for identity, source facts, enrichments, and change bookkeeping.
+
+Its stable shared envelope is organized into `idea`, `meta`, `plus`, and `edit`.
 
 Its stable identifier is the FQMN, using the format:
 
@@ -239,7 +242,28 @@ Its stable identifier is the FQMN, using the format:
 
 The `domain` part may use dot-separated taxonomy, for example `data.table`.
 
-### 5.2 Runtime Sidecar Data
+### 5.2 Domain Contract Resources
+
+A domain definition is the registration point for a domain's identity contract, storage contract, and schema entry.
+
+Recommended organization:
+
+- `domain_xxx.json` declares domain registration, identity generation, storage contract, and schema entry
+- `xxx_doc.json` is the preferred standalone schema file for built-in domains that need normal JSON Schema `$ref`, `$defs`, and reuse
+
+Schema sourcing modes:
+
+- built-in domains may use `schemaRef` to point at standalone shared schema resources
+- user-defined domains may embed inline schema as JSON object content in the domain definition
+
+Validation and activation rules:
+
+- storage may be drafted before schema
+- a domain is not active until schema validity and schema-storage cross-validation both pass
+- schema remains authoritative for logical field existence and base type
+- storage adds backend indexing behavior and must not redefine logical field existence or base type
+
+### 5.3 Runtime Sidecar Data
 
 Operational state should be kept outside canonical metadata when it represents execution or control flow, for example:
 
@@ -258,11 +282,19 @@ Rename implications:
 - old sidecar entries may be retained temporarily or garbage-collected
 - backend infrastructure must not infer cross-domain rename intent
 
-### 5.3 Storage Decision
+### 5.4 Storage Decision
 
 The current backend storage is Elasticsearch.
 
 That decision is part of the current architecture, not a universal platform rule.
+
+When a backend document identifier is needed for canonical metadata, FQMN should be used directly. Internal surrogate ids are not part of the shared document model.
+
+Compatibility rules:
+
+- Metaplus targets an ES-compatible subset, not full engine-specific feature parity
+- engine usage should stay within the subset verified on both Elasticsearch and OpenSearch
+- any new storage feature must be validated on both engines before it becomes required behavior
 
 ---
 
@@ -273,6 +305,9 @@ That decision is part of the current architecture, not a universal platform rule
 ```text
 Metadata Source
   -> metaplus-syncer-xxx
+  -> build source identity inputs
+  -> domain contract lookup
+  -> identity generation into MetaplusDoc.idea
   -> normalize and validate into MetaplusDoc
   -> platform API / client
   -> backend infrastructure
@@ -327,7 +362,7 @@ The key requirement is not that every module must exist now, but that every new 
 
 ## 8. Recommended Evolution Order
 
-1. Stabilize `metaplus-core` and JSON Schemas
+1. Stabilize `metaplus-core`, built-in JSON Schemas, and domain contract validation
 2. Continue strengthening `metaplus-backend-lib`
 3. Define platform APIs and implement `metaplus-client`
 4. Add high-value `metaplus-syncer-xxx` modules

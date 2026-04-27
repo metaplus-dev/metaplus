@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/domain_doc.json",
+  "title": "DomainDoc",
+  "description": "Built-in domain definition document that extends MetaplusDoc with domain registration, storage, and schema contracts.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "metaplus_doc.json"
+    },
+    {
+      "$ref": "#/$defs/self"
+    }
+  ],
+  "$defs": {
+    "self": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "type": "object",
+          "properties": {
+            "domain": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Registered domain name.",
+                  "type": "string"
+                },
+                "desc": {
+                  "description": "Human-readable description of the domain.",
+                  "type": "string"
+                },
+                "template": {
+                  "description": "Parent template domain this domain extends.",
+                  "type": "string"
+                },
+                "abstract": {
+                  "description": "Whether the domain is a non-instantiable template.",
+                  "type": "boolean"
+                },
+                "system": {
+                  "description": "Whether the domain is built-in and platform-owned.",
+                  "type": "boolean"
+                },
+                "weight": {
+                  "description": "Boost weight used for cross-index search. Defaults to 1.0 when omitted.",
+                  "type": "number",
+                  "default": 1.0
+                }
+              },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "storage": {
+              "description": "Storage contract for the domain.",
+              "type": "object",
+              "properties": {
+                "mappings": {"type": "object"},
+                "settings": {"type": "object"}
+              }
+            },
+            "schema": {
+              "description": "Schema entry for the domain, either built-in ref or inline schema object.",
+              "type": "object"
+            }
+          },
+          "required": ["domain", "storage", "schema"],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

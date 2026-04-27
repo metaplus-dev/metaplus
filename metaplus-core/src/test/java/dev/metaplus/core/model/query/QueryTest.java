@@ -1,5 +1,6 @@
 package dev.metaplus.core.model.query;
 
+import dev.metaplus.core.model.search.Query;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonArray;
 

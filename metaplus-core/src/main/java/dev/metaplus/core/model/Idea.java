@@ -1,6 +1,7 @@
 package dev.metaplus.core.model;
 
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -15,10 +16,15 @@ import org.sjf4j.JsonObject;
  */
 @Getter @Setter
 public class Idea extends JsonObject {
+    @NotEmpty
     private String fqmn;
+    @NotEmpty
     private String domain;
+    @NotEmpty
     private String system;
+    @NotEmpty
     private String instance;
+    @NotEmpty
     private String entity;
 
     public static Idea of(@NonNull String fqmn) {
@@ -32,4 +38,5 @@ public class Idea extends JsonObject {
         idea.setEntity(ss[3]);
         return idea;
     }
+
 }

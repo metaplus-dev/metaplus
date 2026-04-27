@@ -1,12 +1,8 @@
 package dev.metaplus.core.model.agg;
 
-import dev.metaplus.core.model.query.Query;
 import lombok.Getter;
 import lombok.Setter;
-import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.sjf4j.annotation.node.AnyOf;
-import org.sjf4j.annotation.node.NodeProperty;
 
 import java.util.Map;
 

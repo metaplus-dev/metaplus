@@ -5,140 +5,115 @@
   "description": "Shared reusable schema definitions for identity, metadata envelopes, query fragments, scripts, and patch results.",
   "$defs": {
     "scalar": {
-      "title": "ScalarValue",
       "description": "A primitive value allowed in generic filters, sort values, and script parameters.",
       "type": ["string", "number", "boolean", "null"]
     },
-
-    "fqmn": {
-      "title": "FQMN",
-      "type": "string",
-      "description": "Fully qualified metadata name: <domain>:<system>:<instance>:<entity>. The domain part may use dot-separated taxonomy such as data.table.",
-      "pattern": "^[^:]+:[^:]+:[^:]+:[^:]+$"
-    },
-    "domain": {
-      "title": "DomainName",
-      "type": "string",
-      "description": "Logical domain name used to partition metadata and runtime operations. The domain may use dot-separated taxonomy such as data.table.",
-      "pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
-      "maxLength": 100
-    },
     "domains": {
-      "title": "DomainNames",
       "description": "A list of domain names used to scope multi-domain requests.",
       "type": "array",
-      "items": { "$ref": "#/$defs/domain" }
-    },
-    "system": {
-      "title": "SystemName",
-      "type": "string",
-      "description": "Source system name that owns or synchronizes the metadata.",
-      "pattern": "^[a-z0-9_-]+$",
-      "maxLength": 100
-    },
-    "instance": {
-      "title": "InstanceName",
-      "type": "string",
-      "description": "Instance name within the source system, such as an environment, cluster, or account.",
-      "pattern": "^[a-z0-9_-]+$",
-      "maxLength": 100
-    },
-    "entity": {
-      "title": "EntityName",
-      "type": "string",
-      "description": "Entity identifier within the source instance, for example a table, topic, or model path.",
-      "pattern": "^[a-zA-Z0-9_./\\-()\\[\\]]+$",
-      "maxLength": 300
+      "items": {"type": "string"}
     },
     "atTime": {
-      "title": "Timestamp",
-      "type": "string",
       "description": "Canonical UTC timestamp represented as an RFC 3339 date-time string.",
+      "type": "string",
       "format": "date-time"
     },
     "byName": {
-      "title": "ActorName",
-      "type": "string",
       "description": "Human or agent identifier that performed an operation.",
+      "type": "string",
       "minLength": 1
     },
 
-
     "idea": {
-      "title": "IdeaSection",
-      "type": "object",
       "description": "Stable identity section of a Metaplus document, carrying FQMN and its decomposed parts.",
+      "type": "object",
       "properties": {
         "fqmn": {
-          "$ref": "#/$defs/fqmn"
+          "description": "Fully qualified metadata name: <domain>:<system>:<instance>:<entity>.",
+          "type": "string",
+          "pattern": "^[^:]+:[^:]+:[^:]+:[^:]+$"
         },
         "domain": {
-          "$ref": "#/$defs/domain"
+          "description": "Logical domain name used to partition metadata and runtime operations. The domain may use dot-separated taxonomy such as data.table.",
+          "type": "string",
+          "pattern": "^[a-z0-9._-]+$",
+          "maxLength": 100
         },
         "system": {
-          "$ref": "#/$defs/system"
+          "description": "Source system name that owns or synchronizes the metadata.",
+          "type": "string",
+          "pattern": "^[a-z0-9._-]+$",
+          "maxLength": 100
         },
         "instance": {
-          "$ref": "#/$defs/instance"
+          "description": "Instance name within the source system, such as an environment, cluster, or account.",
+          "type": "string",
+          "pattern": "^[a-z0-9._-]+$",
+          "maxLength": 100
         },
         "entity": {
-          "$ref": "#/$defs/entity"
-        },
-        "version": {
-          "type": "integer"
+          "description": "Entity identifier within the source instance, for example a table, topic, or model path.",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._\\-+,~|@(){}\\[\\]]+$",
+          "maxLength": 300
         }
       },
       "required": ["fqmn", "domain", "system", "instance", "entity"],
       "additionalProperties": true
     },
-    "info": {
-      "title": "InfoSection",
+    "edit": {
+      "description": "Document-level edit bookkeeping for meta and plus sections.",
       "type": "object",
-      "description": "Operational bookkeeping for versioning and inner storage identifiers of meta and plus sections.",
       "properties": {
         "meta": {
+          "type": "object",
           "properties": {
             "version": {
               "type": "integer"
             },
             "createdAt": {
-              "type": "string",
-              "format": "date-time"
+              "$ref": "#/$defs/atTime"
             },
             "createdBy": {
-              "type": "string"
+              "$ref": "#/$defs/byName"
             },
             "updatedAt": {
-              "type": "string",
-              "format": "date-time"
+              "$ref": "#/$defs/atTime"
             },
             "updatedBy": {
-              "type": "string"
+              "$ref": "#/$defs/byName"
+            },
+            "deletedAt": {
+              "$ref": "#/$defs/atTime"
+            },
+            "deletedBy": {
+              "$ref": "#/$defs/byName"
+            },
+            "restoredAt": {
+              "$ref": "#/$defs/atTime"
+            },
+            "restoredBy": {
+              "$ref": "#/$defs/byName"
             }
           }
         },
         "plus": {
+          "type": "object",
           "properties": {
             "version": {
-              "type": "integer",
-              "minimum": 0
+              "type": "integer"
             },
             "updatedAt": {
-              "type": "string",
-              "format": "date-time"
+              "$ref": "#/$defs/atTime"
             },
             "updatedBy": {
-              "type": "string"
+              "$ref": "#/$defs/byName"
             }
           }
-        },
-        "innerId": { "type": "string"},
-        "innerVersion": { "type": "integer" }
-      },
-      "additionalProperties": true
+        }
+      }
     },
     "query": {
-      "title": "QueryClause",
       "description": "Reusable query fragment compatible with the supported Metaplus search and patch APIs.",
       "oneOf": [
         {
@@ -274,7 +249,6 @@
       ]
     },
     "script": {
-      "title": "ScriptDefinition",
       "description": "Reusable script payload for patch-style operations.",
       "type": "object",
       "properties": {
@@ -302,7 +276,6 @@
       ]
     },
     "result": {
-      "title": "PatchResult",
       "description": "Normalized result counters returned by write and delete style operations.",
       "properties": {
         "innerId": { "type": "string" },

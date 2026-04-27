@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metaplus.dev/json-schemas/search_response.json",
+  "title": "SearchResponse",
+  "description": "Search API response payload.",
+  "type": "object",
+  "properties": {
+    "total": {
+      "description": "Total number of matched documents before pagination.",
+      "type": "integer"
+    },
+    "maxScore": {
+      "description": "Maximum relevance score among returned hits when scoring is applicable.",
+      "type": ["number", "null"]
+    },
+    "hits": {
+      "description": "Ordered list of matching documents.",
+      "type": "array",
+      "items": {
+        "title": "SearchHit",
+        "description": "One matched document together with optional scoring, field, and highlight metadata.",
+        "type": "object",
+        "properties": {
+          "innerId": {
+            "description": "Underlying storage identifier of the matched document.",
+            "type": "string"
+          },
+          "score": {
+            "description": "Per-hit relevance score when scoring is enabled.",
+            "type": ["number", "null"]
+          },
+          "doc": {
+            "description": "Returned Metaplus document.",
+            "$ref": "metaplus_doc.json"
+          },
+          "fields": {
+            "description": "Additional field values returned alongside the document.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "$ref": "base.json#/$defs/scalar" }
+            }
+          },
+          "sort": {
+            "description": "Sort values corresponding to the configured sort clauses.",
+            "type": "array",
+            "items": { "$ref": "base.json#/$defs/scalar" }
+          },
+          "highlight": {
+            "description": "Highlighted fragments keyed by field name.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

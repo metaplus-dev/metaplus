@@ -1,6 +1,5 @@
 package dev.metaplus.core.model.search;
 
-import dev.metaplus.core.model.query.Query;
 import lombok.Getter;
 import lombok.Setter;
 import org.sjf4j.JsonArray;

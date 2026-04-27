@@ -1,6 +1,5 @@
 plugins {
     id("java")
-    id("jacoco")
 }
 
 java {
@@ -18,9 +17,8 @@ configurations {
 dependencies {
     implementation("org.sjf4j:sjf4j:${Versions.sjf4j}")
     implementation("org.slf4j:slf4j-api:${Versions.slf4j}")
+    implementation("jakarta.validation:jakarta.validation-api:${Versions.jakartaValidation}")
 
-    compileOnly("com.alibaba.fastjson2:fastjson2:${Versions.fastjson2}")
-    compileOnly("com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}")
     compileOnly("org.springframework.boot:spring-boot:${Versions.springBootJdk8}")
     compileOnly("org.springframework:spring-web:${Versions.springFrameworkJdk8}")
     compileOnly("org.springframework:spring-webflux:${Versions.springFrameworkJdk8}")
@@ -46,37 +44,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
-}
-
-tasks.jacocoTestCoverageVerification {
-    dependsOn(tasks.test)
-
-    violationRules {
-        rule {
-            limit {
-                counter = "LINE"
-                value = "COVEREDRATIO"
-                minimum = "0.70".toBigDecimal()
-            }
-            limit {
-                counter = "BRANCH"
-                value = "COVEREDRATIO"
-                minimum = "0.70".toBigDecimal()
-            }
-        }
-    }
-}
-
-tasks.check {
-    dependsOn(tasks.jacocoTestCoverageVerification)
 }

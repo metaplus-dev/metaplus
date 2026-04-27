@@ -1,12 +1,25 @@
 {
   "mappings": {
-    "dynamic": "strict",
+    "dynamic": false,
+    "dynamic_templates": [
+      {
+        "idea_strings_as_keyword": {
+          "path_match": "idea.*",
+          "match_mapping_type": "string",
+          "mapping": {"type": "keyword"}
+        }
+      }
+    ],
     "properties": {
-      "fqmn": {
-        "type": "keyword"
-      },
-      "domain": {
-        "type": "keyword"
+      "idea": {
+        "dynamic": true,
+        "properties": {
+          "fqmn": {"type": "keyword"},
+          "domain": {"type": "keyword"},
+          "system": {"type": "keyword"},
+          "instance": {"type": "keyword"},
+          "entity": {"type": "keyword"}
+        }
       },
       "upsertedAt": {
         "type": "date"

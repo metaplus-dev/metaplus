@@ -12,7 +12,13 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven("https://central.sonatype.com/repository/maven-snapshots/") {
+            mavenContent {
+                snapshotsOnly()
+            }
+        }
         maven("https://maven.aliyun.com/repository/public")
         mavenCentral()
     }
@@ -23,4 +29,4 @@ dependencyResolutionManagement {
 
 include("metaplus-core")
 include("metaplus-backend-lib")
-
+include("metaplus-backend-server")

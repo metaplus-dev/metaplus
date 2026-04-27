@@ -6,17 +6,18 @@
   },
   "mappings": {
     "dynamic": false,
+    "dynamic_templates": [
+      {
+        "idea_strings_as_keyword": {
+          "path_match": "idea.*",
+          "match_mapping_type": "string",
+          "mapping": {"type": "keyword"}
+        }
+      }
+    ],
     "properties": {
       "idea": {
         "dynamic": true,
-        "dynamic_templates": [
-          {
-            "strings_as_keyword": {
-              "match_mapping_type": "string",
-              "mapping": {"type": "keyword"}
-            }
-          }
-        ],
         "properties": {
           "fqmn": {"type": "keyword"},
           "domain": {"type": "keyword"},

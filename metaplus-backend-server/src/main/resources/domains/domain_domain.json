@@ -1,0 +1,58 @@
+{
+  "idea": {
+    "fqmn": "domain:metaplus:main:domain",
+    "domain": "domain",
+    "system": "metaplus",
+    "instance": "main",
+    "entity": "domain"
+  },
+  "meta": {
+    "domain": {
+      "name": "domain",
+      "desc": "The domain that defines all domains, including itself.",
+      "template": "none",
+      "system": true
+    },
+    "storage": {
+      "index": "i_metaplus_of_domain",
+      "mappings": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "domain": {
+                "properties": {
+                  "name": {
+                    "type": "keyword",
+                    "$value": "${idea.entity}"
+                  },
+                  "desc": {"type": "text"},
+                  "template": {"type": "keyword"},
+                  "abstract": {"type": "boolean"},
+                  "system": {"type": "boolean"},
+                  "weight": {"type": "float"}
+                }
+              },
+              "storage": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "keyword",
+                    "$value": "i_metaplus_of_${idea.entity}"
+                  },
+                  "mappings": {"type": "object"},
+                  "settings": {"type": "object"}
+                }
+              },
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema": {
+      "$ref": "https://metaplus.dev/json-schemas/domain_doc.json"
+    }
+  }
+}
