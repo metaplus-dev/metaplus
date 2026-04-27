@@ -40,7 +40,7 @@ public class SampleStore {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(INDEX_SAMPLE);
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("refresh", targetIndex(INDEX_SAMPLE), response);
+            throw _failureWithEsResponse("refresh", _targetIndex(INDEX_SAMPLE), response);
         }
     }
 
@@ -57,7 +57,7 @@ public class SampleStore {
                 .build(INDEX_SAMPLE);
         EsResponse response = esClient.post(uri, sample);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("post", targetSample(sample), response);
+            throw _failureWithEsResponse("post", _targetSample(sample), response);
         }
         return response.getOpResult();
     }
@@ -99,7 +99,7 @@ public class SampleStore {
 
         EsResponse response = esClient.bulk(bulkItemReqs);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("postBatch", "fqmn=" + idea.getFqmn() + ", size=" + dataList.size(), response);
+            throw _failureWithEsResponse("postBatch", "fqmn=" + idea.getFqmn() + ", size=" + dataList.size(), response);
         }
         return response.getBulkResult();
     }
@@ -121,7 +121,7 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, search);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("get", targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("get", _targetFqmn(fqmn), response);
         }
 
         SearchResponse<Sample> sr = response.getBodyAsSearchResponse(Sample.class);
@@ -142,7 +142,7 @@ public class SampleStore {
         JsonObject body = JsonObject.of("doc", JsonObject.of("locked", locked));
         EsResponse response = esClient.post(uri, body);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("lock", targetFqmn(fqmn) + ", id=" + id, response);
+            throw _failureWithEsResponse("lock", _targetFqmn(fqmn) + ", id=" + id, response);
         }
         return response.getOpResult();
     }
@@ -164,7 +164,7 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, search);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("clear", targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("clear", _targetFqmn(fqmn), response);
         }
         return response.getOpResult();
     }
@@ -185,25 +185,25 @@ public class SampleStore {
 
         EsResponse response = esClient.post(uri, JsonObject.of("query", query, "script", script));
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("rename", "oldFqmn=" + oldFqmn + ", newFqmn=" + newIdea.getFqmn(), response);
+            throw _failureWithEsResponse("rename", "oldFqmn=" + oldFqmn + ", newFqmn=" + newIdea.getFqmn(), response);
         }
         return response.getOpResult();
     }
 
-    private String targetIndex(String index) {
+    private String _targetIndex(String index) {
         return "index=" + index;
     }
 
-    private String targetFqmn(String fqmn) {
+    private String _targetFqmn(String fqmn) {
         return "fqmn=" + fqmn;
     }
 
-    private String targetSample(Sample sample) {
+    private String _targetSample(Sample sample) {
         String fqmn = sample.getIdea() == null ? null : sample.getIdea().getFqmn();
         return fqmn == null ? "sample" : "fqmn=" + fqmn;
     }
 
-    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+    private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
         return new BackendException("SampleStore." + operation + " failed: target=" + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }

@@ -28,7 +28,7 @@ public class DomainStore {
 
 
     public void putDomainDoc(DomainDoc domainDoc) {
-        validateDomainDoc(domainDoc);
+        _validateDomainDoc(domainDoc);
         domainCache.put(domainDoc.getMetaDomainName(), domainDoc);
     }
 
@@ -89,7 +89,7 @@ public class DomainStore {
     }
 
     public JsonObject getMergedStorage(DomainDoc domainDoc) {
-        return buildRichStorageRecursively(domainDoc);
+        return _buildRichStorageRecursively(domainDoc);
     }
 
 
@@ -107,19 +107,19 @@ public class DomainStore {
 
     /// private
 
-    private JsonObject buildRichStorageRecursively(DomainDoc domainDoc) {
+    private JsonObject _buildRichStorageRecursively(DomainDoc domainDoc) {
         JsonObject richStorage = new JsonObject();
         String templateDomain = domainDoc.getMetaDomainTemplate();
         if (StringUtils.hasText(templateDomain)) {
             DomainDoc templateDomainDoc = getDomainDocOrElseThrow(templateDomain);
-            JsonObject templateStorage = buildRichStorageRecursively(templateDomainDoc);
+            JsonObject templateStorage = _buildRichStorageRecursively(templateDomainDoc);
             richStorage.merge(templateStorage, false, true);
         }
         richStorage.merge(domainDoc.getMetaStorage(), true, true);
         return richStorage;
     }
 
-    private void validateDomainDoc(DomainDoc domainDoc) {
+    private void _validateDomainDoc(DomainDoc domainDoc) {
         Assert.notNull(domainDoc, "domainDoc must not be null");
 
         String domainName = domainDoc.getMetaDomainName();

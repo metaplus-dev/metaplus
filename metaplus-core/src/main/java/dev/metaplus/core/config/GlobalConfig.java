@@ -41,7 +41,7 @@ public class GlobalConfig {
     }
 
     public static void loadSpringEnv(@NonNull ConfigurableEnvironment env, String prefix) {
-        clearSpringProperties(prefix);
+        _clearSpringProperties(prefix);
         env.getPropertySources().forEach(propertySource -> {
             if (propertySource instanceof EnumerablePropertySource) {
                 EnumerablePropertySource<?> eps = (EnumerablePropertySource<?>) propertySource;
@@ -50,7 +50,7 @@ public class GlobalConfig {
                     if (prefix != null && !name.startsWith(prefix)) {
                         continue;
                     }
-                    putSpringProperty(env, eps, name);
+                    _putSpringProperty(env, eps, name);
                 }
             }
         });
@@ -62,7 +62,7 @@ public class GlobalConfig {
             obj = System.getProperty(key);
         }
         if (null == obj) {
-            String envName = key2EnvName(key);
+            String envName = _key2EnvName(key);
             obj = System.getenv(envName);
         }
         if (null == obj) {
@@ -158,7 +158,7 @@ public class GlobalConfig {
             attempts++;
             for (Object key : props.keySet()) {
                 String oldValue = String.valueOf(props.get(key));
-                String newValue = resolveVars(oldValue);
+                String newValue = _resolveVars(oldValue);
                 propertiesMap.put(String.valueOf(key), newValue);
                 if (!oldValue.equals(newValue)) {
                     changed = true;
@@ -206,7 +206,7 @@ public class GlobalConfig {
 
     /// private
 
-    private static void putSpringProperty(ConfigurableEnvironment env, EnumerablePropertySource<?> propertySource,
+    private static void _putSpringProperty(ConfigurableEnvironment env, EnumerablePropertySource<?> propertySource,
                                           String name) {
         if (springPropertiesMap.containsKey(name)) {
             return;
@@ -224,7 +224,7 @@ public class GlobalConfig {
         log.debug("Put spring property({}={}) from {}", name, resolvedValue, propertySource.getName());
     }
 
-    private static void clearSpringProperties(String prefix) {
+    private static void _clearSpringProperties(String prefix) {
         if (prefix == null) {
             springPropertiesMap.clear();
             return;
@@ -233,7 +233,7 @@ public class GlobalConfig {
         springPropertiesMap.keySet().removeIf(key -> key.startsWith(prefix));
     }
 
-    private static String key2EnvName(String key) {
+    private static String _key2EnvName(String key) {
         return key.toUpperCase().replaceAll("\\.", "_");
     }
 
@@ -242,7 +242,7 @@ public class GlobalConfig {
      *   ${TMPDIR:/tmp}/file => /tmp/file (When TMPDIR does not exist)
      *   ${TMPDIR}/file => ${TMPDIR}/file (When TMPDIR does not exist)
      */
-    private static String resolveVars(String input) {
+    private static String _resolveVars(String input) {
         if (input == null || input.isEmpty()) {
             return input;
         }

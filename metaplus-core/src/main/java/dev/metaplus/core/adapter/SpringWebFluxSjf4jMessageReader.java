@@ -30,7 +30,7 @@ public class SpringWebFluxSjf4jMessageReader implements HttpMessageReader<Object
 
     @Override
     public boolean canRead(ResolvableType elementType, MediaType mediaType) {
-        return mediaType == null || isJsonMediaType(mediaType);
+        return mediaType == null || _isJsonMediaType(mediaType);
     }
 
     @Override
@@ -44,11 +44,11 @@ public class SpringWebFluxSjf4jMessageReader implements HttpMessageReader<Object
     public Mono<Object> readMono(ResolvableType elementType, ReactiveHttpInputMessage message,
                                      Map<String, Object> hints) {
         return DataBufferUtils.join(message.getBody())
-                .map(dataBuffer -> dataBuffer2Object(dataBuffer, elementType));
+                .map(dataBuffer -> _dataBuffer2Object(dataBuffer, elementType));
     }
 
 
-    private Object dataBuffer2Object(DataBuffer dataBuffer, ResolvableType elementType) {
+    private Object _dataBuffer2Object(DataBuffer dataBuffer, ResolvableType elementType) {
         Class<?> clazz = elementType.resolve(Object.class);
         try (InputStream is = dataBuffer.asInputStream(true)) {
             return Jsons.fromJson(is, clazz);
@@ -57,7 +57,7 @@ public class SpringWebFluxSjf4jMessageReader implements HttpMessageReader<Object
         }
     }
 
-    private static boolean isJsonMediaType(MediaType mediaType) {
+    private static boolean _isJsonMediaType(MediaType mediaType) {
         return MediaType.APPLICATION_JSON.isCompatibleWith(mediaType)
                 || APPLICATION_ANY_JSON.isCompatibleWith(mediaType)
                 || mediaType.getSubtype().endsWith("+json");

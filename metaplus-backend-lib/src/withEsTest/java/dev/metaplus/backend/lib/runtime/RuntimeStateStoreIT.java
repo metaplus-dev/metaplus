@@ -51,12 +51,12 @@ class RuntimeStateStoreIT extends EsIntegrationTestSupport {
 
     @Test
     void searchPendingByJobReturnsOnlyPendingDocuments() {
-        indexRuntimeState("data:mysql:main:warehouse.sales.a", "2026-03-20T10:00:00Z", null, null);
-        indexRuntimeState("data:mysql:main:warehouse.sales.b", "2026-03-20T11:00:00Z", "2026-03-24T09:00:00Z", null);
-        indexRuntimeState("data:mysql:main:warehouse.sales.c", "2026-03-20T12:00:00Z", "2026-03-26T09:00:00Z", null);
-        indexRuntimeState("data:mysql:main:warehouse.sales.d", "2026-03-20T13:00:00Z", "2026-03-24T08:00:00Z",
+        _indexRuntimeState("data:mysql:main:warehouse.sales.a", "2026-03-20T10:00:00Z", null, null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.b", "2026-03-20T11:00:00Z", "2026-03-24T09:00:00Z", null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.c", "2026-03-20T12:00:00Z", "2026-03-26T09:00:00Z", null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.d", "2026-03-20T13:00:00Z", "2026-03-24T08:00:00Z",
                 "2026-03-24T08:30:00Z");
-        indexRuntimeState("ml:mysql:main:model.features.e", "2026-03-20T14:00:00Z", null, null);
+        _indexRuntimeState("ml:mysql:main:model.features.e", "2026-03-20T14:00:00Z", null, null);
         refreshIndex(indexName);
 
         SearchResponse<RuntimeState> response = store.searchPendingByJob(
@@ -74,9 +74,9 @@ class RuntimeStateStoreIT extends EsIntegrationTestSupport {
         String completedAt = "2026-03-24T09:00:00Z";
         String firstUpsertedAt = "2026-03-20T10:00:00Z";
 
-        indexRuntimeState("data:mysql:main:warehouse.sales.a", firstUpsertedAt, completedAt, null);
-        indexRuntimeState("data:mysql:main:warehouse.sales.b", "2026-03-20T11:00:00Z", completedAt, null);
-        indexRuntimeState("data:mysql:main:warehouse.sales.c", "2026-03-20T11:00:00Z", completedAt, null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.a", firstUpsertedAt, completedAt, null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.b", "2026-03-20T11:00:00Z", completedAt, null);
+        _indexRuntimeState("data:mysql:main:warehouse.sales.c", "2026-03-20T11:00:00Z", completedAt, null);
         refreshIndex(indexName);
 
         SearchResponse<RuntimeState> firstPage = store.searchPendingByJob(
@@ -98,8 +98,8 @@ class RuntimeStateStoreIT extends EsIntegrationTestSupport {
         String dataFqmn = "data:mysql:main:warehouse.sales.orders";
         String mlFqmn = "ml:mysql:main:model.features.orders";
 
-        indexRuntimeState(dataFqmn, "2026-03-20T10:00:00Z", null, null);
-        indexRuntimeState(mlFqmn, "2026-03-20T11:00:00Z", null, null);
+        _indexRuntimeState(dataFqmn, "2026-03-20T10:00:00Z", null, null);
+        _indexRuntimeState(mlFqmn, "2026-03-20T11:00:00Z", null, null);
         refreshIndex(indexName);
 
         store.clearByDomain("data");
@@ -109,7 +109,7 @@ class RuntimeStateStoreIT extends EsIntegrationTestSupport {
         assertNotNull(store.get(mlFqmn));
     }
 
-    private void indexRuntimeState(String fqmn, String upsertedAt, String lastSamplingAt, String deletedAt) {
+    private void _indexRuntimeState(String fqmn, String upsertedAt, String lastSamplingAt, String deletedAt) {
         JsonObject document = JsonObject.of(
                 "idea", Idea.of(fqmn),
                 "upsertedAt", upsertedAt

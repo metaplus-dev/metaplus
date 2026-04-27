@@ -50,11 +50,11 @@ class RuntimeStateStoreTest {
         AtomicReference<JsonObject> bodyRef = new AtomicReference<>();
         server.createContext("/" + INDEX_NAME + "/_update/data:system:instance:entity", exchange -> {
             methodRef.set(exchange.getRequestMethod());
-            bodyRef.set(readJsonBody(exchange));
-            respond(exchange, 200, "{\"result\":\"updated\"}", "application/json");
+            bodyRef.set(_readJsonBody(exchange));
+            _respond(exchange, 200, "{\"result\":\"updated\"}", "application/json");
         });
 
-        RuntimeStateStore store = newStore();
+        RuntimeStateStore store = _newStore();
         store.markJobCompleted("data:system:instance:entity", RuntimeJobType.LLM_GEN);
 
         JsonObject body = bodyRef.get();
@@ -74,11 +74,11 @@ class RuntimeStateStoreTest {
         AtomicReference<SearchRequest> requestRef = new AtomicReference<>();
         server.createContext("/" + INDEX_NAME + "/_search", exchange -> {
             methodRef.set(exchange.getRequestMethod());
-            requestRef.set(readBody(exchange, SearchRequest.class));
-            respond(exchange, 200, "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}", "application/json");
+            requestRef.set(_readBody(exchange, SearchRequest.class));
+            _respond(exchange, 200, "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}", "application/json");
         });
 
-        RuntimeStateStore store = newStore();
+        RuntimeStateStore store = _newStore();
         store.searchPendingByJob("data", RuntimeJobType.SAMPLING, "2026-03-25T10:00:00Z", 10,
                 JsonArray.of("2026-03-24T10:00:00Z", "2026-03-25T09:00:00Z", "data:system:instance:entity"));
 
@@ -100,9 +100,9 @@ class RuntimeStateStoreTest {
     @Test
     void getReturnsNullWhenDocumentIsMissing() {
         server.createContext("/" + INDEX_NAME + "/_doc/data:system:instance:entity",
-                exchange -> respond(exchange, 404, "{}", "application/json"));
+                exchange -> _respond(exchange, 404, "{}", "application/json"));
 
-        RuntimeStateStore store = newStore();
+        RuntimeStateStore store = _newStore();
 
         assertNull(store.get("data:system:instance:entity"));
     }
@@ -113,11 +113,11 @@ class RuntimeStateStoreTest {
         AtomicReference<SearchRequest> requestRef = new AtomicReference<>();
         server.createContext("/" + INDEX_NAME + "/_delete_by_query", exchange -> {
             methodRef.set(exchange.getRequestMethod());
-            requestRef.set(readBody(exchange, SearchRequest.class));
-            respond(exchange, 200, "{\"deleted\":2,\"total\":2}", "application/json");
+            requestRef.set(_readBody(exchange, SearchRequest.class));
+            _respond(exchange, 200, "{\"deleted\":2,\"total\":2}", "application/json");
         });
 
-        RuntimeStateStore store = newStore();
+        RuntimeStateStore store = _newStore();
         store.clearByDomain("data");
 
         assertEquals("POST", methodRef.get());
@@ -127,9 +127,9 @@ class RuntimeStateStoreTest {
     @Test
     void getUsesNormalizedFailureMessage() {
         server.createContext("/" + INDEX_NAME + "/_doc/data:system:instance:entity",
-                exchange -> respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
+                exchange -> _respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
 
-        RuntimeStateStore store = newStore();
+        RuntimeStateStore store = _newStore();
 
         BackendException ex = assertThrows(BackendException.class,
                 () -> store.get("data:system:instance:entity"));
@@ -138,25 +138,25 @@ class RuntimeStateStoreTest {
                 ex.getMessage());
     }
 
-    private RuntimeStateStore newStore() {
+    private RuntimeStateStore _newStore() {
         EsClient client = new EsClient(baseUrl);
         return new RuntimeStateStore(client, INDEX_NAME);
     }
 
-    private static String readBody(HttpExchange exchange) throws IOException {
+    private static String _readBody(HttpExchange exchange) throws IOException {
         byte[] bytes = exchange.getRequestBody().readAllBytes();
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private static JsonObject readJsonBody(HttpExchange exchange) throws IOException {
-        return readBody(exchange, JsonObject.class);
+    private static JsonObject _readJsonBody(HttpExchange exchange) throws IOException {
+        return _readBody(exchange, JsonObject.class);
     }
 
-    private static <T> T readBody(HttpExchange exchange, Class<T> clazz) throws IOException {
-        return Jsons.fromJson(readBody(exchange), clazz);
+    private static <T> T _readBody(HttpExchange exchange, Class<T> clazz) throws IOException {
+        return Jsons.fromJson(_readBody(exchange), clazz);
     }
 
-    private static void respond(HttpExchange exchange, int statusCode, String body, String contentType) throws IOException {
+    private static void _respond(HttpExchange exchange, int statusCode, String body, String contentType) throws IOException {
         if (contentType != null) {
             exchange.getResponseHeaders().add("Content-Type", contentType);
         }

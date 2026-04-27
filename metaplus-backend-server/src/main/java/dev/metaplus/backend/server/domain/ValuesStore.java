@@ -160,26 +160,26 @@ public class ValuesStore {
     }
 
     public String composeScript(String domain, String userSource) {
-        return SCRIPT_BEFORE_ALL_IN_ONE + normalizeUserSource(userSource) + getDerivedAssignmentScriptOrElseThrow(domain);
+        return SCRIPT_BEFORE_ALL_IN_ONE + _normalizeUserSource(userSource) + getDerivedAssignmentScriptOrElseThrow(domain);
     }
 
     public String getDerivedAssignmentScriptOrElseThrow(String domain) {
         domainStore.getDomainDocOrElseThrow(domain);
         List<String> templateChain = new ArrayList<>();
-        collectTemplateChainRootFirst(domain, templateChain);
-        String signature = buildTemplateChainSignature(templateChain);
+        _collectTemplateChainRootFirst(domain, templateChain);
+        String signature = _buildTemplateChainSignature(templateChain);
 
         DerivedScriptCacheEntry cached = domainDerivedScriptCache.get(domain);
         if (cached != null && Objects.equals(cached.signature, signature)) {
             return cached.script;
         }
 
-        String compiled = compileDerivedAssignmentsWithTemplateOrder(templateChain);
+        String compiled = _compileDerivedAssignmentsWithTemplateOrder(templateChain);
         domainDerivedScriptCache.put(domain, new DerivedScriptCacheEntry(signature, compiled));
         return compiled;
     }
 
-    private String normalizeUserSource(String userSource) {
+    private String _normalizeUserSource(String userSource) {
         if (userSource == null) {
             return "";
         }
@@ -190,11 +190,11 @@ public class ValuesStore {
         return source;
     }
 
-    private String compileDerivedAssignmentsWithTemplateOrder(List<String> templateChain) {
+    private String _compileDerivedAssignmentsWithTemplateOrder(List<String> templateChain) {
         List<DerivedAssignment> orderedAssignments = new ArrayList<>();
         for (String currentDomain : templateChain) {
             DomainDoc currentDomainDoc = domainStore.getDomainDocOrElseThrow(currentDomain);
-            orderedAssignments.addAll(collectDerivedAssignments(currentDomainDoc.getMetaStorageMappings()));
+            orderedAssignments.addAll(_collectDerivedAssignments(currentDomainDoc.getMetaStorageMappings()));
         }
 
         StringBuilder script = new StringBuilder();
@@ -208,7 +208,7 @@ public class ValuesStore {
         return script.toString();
     }
 
-    private String buildTemplateChainSignature(List<String> templateChain) {
+    private String _buildTemplateChainSignature(List<String> templateChain) {
         StringBuilder signature = new StringBuilder();
         for (String currentDomain : templateChain) {
             DomainDoc currentDomainDoc = domainStore.getDomainDocOrElseThrow(currentDomain);
@@ -219,15 +219,15 @@ public class ValuesStore {
         return signature.toString();
     }
 
-    private void collectTemplateChainRootFirst(String domain, List<String> out) {
+    private void _collectTemplateChainRootFirst(String domain, List<String> out) {
         String templateDomain = domainStore.getTemplateDomain(domain);
         if (StringUtils.hasText(templateDomain)) {
-            collectTemplateChainRootFirst(templateDomain, out);
+            _collectTemplateChainRootFirst(templateDomain, out);
         }
         out.add(domain);
     }
 
-    private List<DerivedAssignment> collectDerivedAssignments(JsonObject mappings) {
+    private List<DerivedAssignment> _collectDerivedAssignments(JsonObject mappings) {
         List<DerivedAssignment> assignments = new ArrayList<>();
         if (mappings == null) {
             return assignments;
@@ -238,12 +238,12 @@ public class ValuesStore {
         }
         for (String section : DERIVED_SECTION_ORDER) {
             Object sectionNode = rootProperties.get(section);
-            collectDerivedAssignmentsInNode(sectionNode, section, assignments);
+            _collectDerivedAssignmentsInNode(sectionNode, section, assignments);
         }
         return assignments;
     }
 
-    private void collectDerivedAssignmentsInNode(Object node, String logicalPath, List<DerivedAssignment> out) {
+    private void _collectDerivedAssignmentsInNode(Object node, String logicalPath, List<DerivedAssignment> out) {
         if (!(node instanceof JsonObject)) {
             return;
         }
@@ -259,7 +259,7 @@ public class ValuesStore {
         }
         properties.forEach((key, childNode) -> {
             String childPath = logicalPath.isEmpty() ? key : logicalPath + "." + key;
-            collectDerivedAssignmentsInNode(childNode, childPath, out);
+            _collectDerivedAssignmentsInNode(childNode, childPath, out);
         });
     }
 

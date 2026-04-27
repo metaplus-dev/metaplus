@@ -22,7 +22,7 @@ public abstract class EsIntegrationTestSupport {
 
     @BeforeEach
     void setUpEsClient() {
-        esClient = new EsClient(resolveBaseUrl());
+        esClient = new EsClient(_resolveBaseUrl());
     }
 
     protected String uniqueIndexName(String baseName) {
@@ -31,7 +31,7 @@ public abstract class EsIntegrationTestSupport {
 
     protected void recreateIndex(String indexName, String resourcePath) {
         deleteIndexIfExists(indexName);
-        EsResponse response = esClient.put(URI.create("/" + indexName), readJsonResource(resourcePath));
+        EsResponse response = esClient.put(URI.create("/" + indexName), _readJsonResource(resourcePath));
         if (!response.isSuccess()) {
             throw new BackendException("Create index '" + indexName + "' failed. status="
                     + response.getStatusCode() + ", body=" + response.getBody());
@@ -62,7 +62,7 @@ public abstract class EsIntegrationTestSupport {
         }
     }
 
-    private static String resolveBaseUrl() {
+    private static String _resolveBaseUrl() {
         String externalBaseUrl = System.getProperty("metaplus.backend.es.baseUrl");
         if (externalBaseUrl == null || externalBaseUrl.isBlank()) {
             externalBaseUrl = System.getenv("METAPLUS_BACKEND_ES_BASEURL");
@@ -94,7 +94,7 @@ public abstract class EsIntegrationTestSupport {
         return "http://" + container.getHost() + ":" + container.getMappedPort(9200);
     }
 
-    private JsonObject readJsonResource(String resourcePath) {
+    private JsonObject _readJsonResource(String resourcePath) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
             if (inputStream == null) {
                 throw new BackendException("Missing resource '" + resourcePath + "'.");

@@ -13,7 +13,7 @@ class DomainStoreTest {
     @Test
     void getMergedStorage_mergesTemplateStorageAndChildOverrides() {
         DomainStore store = new DomainStore();
-        DomainDoc base = domainDoc("base", null, JsonObject.of(
+        DomainDoc base = _domainDoc("base", null, JsonObject.of(
                 "mappings", JsonObject.of(
                         "properties", JsonObject.of(
                                 "baseOnly", JsonObject.of("type", "keyword")
@@ -26,7 +26,7 @@ class DomainStoreTest {
                         )
                 )
         ));
-        DomainDoc child = domainDoc("child", "base", JsonObject.of(
+        DomainDoc child = _domainDoc("child", "base", JsonObject.of(
                 "mappings", JsonObject.of(
                         "properties", JsonObject.of(
                                 "childOnly", JsonObject.of("type", "text")
@@ -55,7 +55,7 @@ class DomainStoreTest {
     @Test
     void getMergedStorage_doesNotMutateTemplateStorage() {
         DomainStore store = new DomainStore();
-        DomainDoc base = domainDoc("base", null, JsonObject.of(
+        DomainDoc base = _domainDoc("base", null, JsonObject.of(
                 "mappings", JsonObject.of(
                         "properties", JsonObject.of(
                                 "baseOnly", JsonObject.of("type", "keyword")
@@ -67,7 +67,7 @@ class DomainStoreTest {
                         )
                 )
         ));
-        DomainDoc child = domainDoc("child", "base", JsonObject.of(
+        DomainDoc child = _domainDoc("child", "base", JsonObject.of(
                 "mappings", JsonObject.of(
                         "properties", JsonObject.of(
                                 "childOnly", JsonObject.of("type", "text")
@@ -139,7 +139,7 @@ class DomainStoreTest {
     @Test
     void putDomainDoc_rejectsSelfTemplate() {
         DomainStore store = new DomainStore();
-        DomainDoc domainDoc = domainDoc("domain", "domain", new JsonObject());
+        DomainDoc domainDoc = _domainDoc("domain", "domain", new JsonObject());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> store.putDomainDoc(domainDoc));
@@ -147,7 +147,7 @@ class DomainStoreTest {
         assertEquals("domainDoc.meta.domain.template must not reference itself: domain", ex.getMessage());
     }
 
-    private static DomainDoc domainDoc(String name, String template, JsonObject storage) {
+    private static DomainDoc _domainDoc(String name, String template, JsonObject storage) {
         DomainDoc domainDoc = new DomainDoc();
         domainDoc.setMetaDomainName(name);
         if (template != null) {

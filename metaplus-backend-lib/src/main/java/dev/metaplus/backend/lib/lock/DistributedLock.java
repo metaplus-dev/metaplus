@@ -40,14 +40,14 @@ public class DistributedLock {
         }
 
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
-                .build(indexName(), lockId);
+                .build(_indexName(), lockId);
         EsResponse response = esClient.get(uri);
         if (response.isSuccess()) {
             Instant now = Instant.now();
             // check if released or expired
             Boolean isReleased = response.getBody().getBooleanByPath("$._source.isReleased");
             if (null == isReleased || !isReleased) {
-                if (isLockActive(response, lockId, now)) {
+                if (_isLockActive(response, lockId, now)) {
                     return false;
                 }
             }
@@ -58,7 +58,7 @@ public class DistributedLock {
             URI uri2 = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
                     .queryParam("if_seq_no", seqNo)
                     .queryParam("if_primary_term", primaryTerm)
-                    .build(indexName(), lockId);
+                    .build(_indexName(), lockId);
             EsResponse response2 = esClient.put(uri2, JsonObject.of(
                     "lockedBy", lockedBy,
                     "lockedAt", DateUtil.format(now),
@@ -73,7 +73,7 @@ public class DistributedLock {
             Instant now = Instant.now();
             URI uri2 = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
                     .queryParam("op_type", "create")
-                    .build(indexName(), lockId);
+                    .build(_indexName(), lockId);
             EsResponse response2 = esClient.put(uri2, JsonObject.of(
                     "lockedBy", lockedBy,
                     "lockedAt", DateUtil.format(now),
@@ -84,7 +84,7 @@ public class DistributedLock {
             return response2.isSuccess();
 
         } else {
-            throw failureWithEsResponse("lock", targetLock(lockId), response);
+            throw _failureWithEsResponse("lock", _targetLock(lockId), response);
         }
 
     }
@@ -96,20 +96,20 @@ public class DistributedLock {
 
     public void release(@NonNull String lockId, @NonNull String lockedBy) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{lockId}")
-                .build(indexName(), lockId);
+                .build(_indexName(), lockId);
         EsResponse response = esClient.get(uri);
         if (response.isSuccess()) {
             String owner = response.getBody().getStringByPath("$._source.lockedBy");
             if (lockedBy.equals(owner)) {
                 Instant now = Instant.now();
-                if (isLockActive(response, lockId, now)) {
+                if (_isLockActive(response, lockId, now)) {
                     // update release doc
                     long seqNo = response.getBody().getLong("_seq_no");
                     long primaryTerm = response.getBody().getLong("_primary_term");
                     URI uri2 = UriComponentsBuilder.fromPath("/{index}/_update/{lockId}")
                             .queryParam("if_seq_no", seqNo)
                             .queryParam("if_primary_term", primaryTerm)
-                            .build(indexName(), lockId);
+                            .build(_indexName(), lockId);
                     EsResponse response2 = esClient.post(uri2, JsonObject.of("doc", JsonObject.of(
                             "isReleased", true,
                             "releasedAt", DateUtil.format(now)
@@ -131,39 +131,39 @@ public class DistributedLock {
         }
     }
 
-    private boolean isLockActive(@NonNull EsResponse response, @NonNull String lockId, @NonNull Instant now) {
+    private boolean _isLockActive(@NonNull EsResponse response, @NonNull String lockId, @NonNull Instant now) {
         String expiredAt = response.getBody().getStringByPath("$._source.expiredAt");
         if (expiredAt == null) {
-            throw failureWithReason("lock", targetLock(lockId), "missing expiredAt");
+            throw _failureWithReason("lock", _targetLock(lockId), "missing expiredAt");
         }
         Instant expiredAtInstant;
         try {
             expiredAtInstant = DateUtil.parseCanonical(expiredAt);
         } catch (IllegalArgumentException e) {
-            throw new BackendException(buildReasonFailureMessage("lock", targetLock(lockId),
+            throw new BackendException(_buildReasonFailureMessage("lock", _targetLock(lockId),
                     "non-canonical expiredAt=" + expiredAt), e);
         }
         return !expiredAtInstant.isBefore(now);
     }
 
-    private String indexName() {
+    private String _indexName() {
         return indexName;
     }
 
-    private String targetLock(String lockId) {
+    private String _targetLock(String lockId) {
         return "lockId=" + lockId;
     }
 
-    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+    private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
         return new BackendException("DistributedLock." + operation + " failed: target=" + target
                 + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
-    private BackendException failureWithReason(String operation, String target, String reason) {
-        return new BackendException(buildReasonFailureMessage(operation, target, reason));
+    private BackendException _failureWithReason(String operation, String target, String reason) {
+        return new BackendException(_buildReasonFailureMessage(operation, target, reason));
     }
 
-    private String buildReasonFailureMessage(String operation, String target, String reason) {
+    private String _buildReasonFailureMessage(String operation, String target, String reason) {
         return "DistributedLock." + operation + " failed: target=" + target + ", reason=" + reason;
     }
 

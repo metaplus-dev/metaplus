@@ -50,12 +50,12 @@ class EsClientTest {
         AtomicReference<String> contentTypeRef = new AtomicReference<>();
         server.createContext("/metrics/_search", exchange -> {
             methodRef.set(exchange.getRequestMethod());
-            bodyRef.set(readBody(exchange));
+            bodyRef.set(_readBody(exchange));
             contentTypeRef.set(exchange.getRequestHeaders().getFirst("Content-Type"));
-            respond(exchange, 200, "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}", "application/json");
+            _respond(exchange, 200, "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}", "application/json");
         });
 
-        EsClient client = newClient();
+        EsClient client = _newClient();
         EsResponse response = client.post(URI.create("/metrics/_search"),
                 JsonObject.of("query", JsonObject.of("match_all", new JsonObject())));
 
@@ -71,13 +71,13 @@ class EsClientTest {
         AtomicReference<String> bodyRef = new AtomicReference<>();
         server.createContext("/_bulk", exchange -> {
             contentTypeRef.set(exchange.getRequestHeaders().getFirst("Content-Type"));
-            bodyRef.set(readBody(exchange));
-            respond(exchange, 200,
+            bodyRef.set(_readBody(exchange));
+            _respond(exchange, 200,
                     "{\"errors\":true,\"items\":[{\"index\":{\"status\":409,\"error\":{\"type\":\"version_conflict_engine_exception\"}}}]}",
                     "application/json");
         });
 
-        EsClient client = newClient();
+        EsClient client = _newClient();
         EsResponse response = client.bulk(List.of(
                 new BulkItemReq(BulkItemMethod.INDEX, "metrics", "m1", JsonObject.of("name", "latency"))
         ));
@@ -91,9 +91,9 @@ class EsClientTest {
 
     @Test
     void headReturnsStatusWithoutDeserializingBody() throws Exception {
-        server.createContext("/metrics", exchange -> respond(exchange, 404, "", null));
+        server.createContext("/metrics", exchange -> _respond(exchange, 404, "", null));
 
-        EsClient client = newClient();
+        EsClient client = _newClient();
         EsResponse response = client.head(URI.create("/metrics"));
 
         assertTrue(response.isNotFound());
@@ -102,9 +102,9 @@ class EsClientTest {
 
     @Test
     void unauthorizedResponseRaisesClearAuthError() {
-        server.createContext("/metrics", exchange -> respond(exchange, 401, "{}", "application/json"));
+        server.createContext("/metrics", exchange -> _respond(exchange, 401, "{}", "application/json"));
 
-        EsClient client = newClient();
+        EsClient client = _newClient();
 
         EsClientException exception = assertThrows(EsClientException.class,
                 () -> client.get(URI.create("/metrics")));
@@ -113,9 +113,9 @@ class EsClientTest {
 
     @Test
     void forbiddenResponseRaisesClearPermissionError() {
-        server.createContext("/metrics", exchange -> respond(exchange, 403, "{}", "application/json"));
+        server.createContext("/metrics", exchange -> _respond(exchange, 403, "{}", "application/json"));
 
-        EsClient client = newClient();
+        EsClient client = _newClient();
 
         EsClientException exception = assertThrows(EsClientException.class,
                 () -> client.get(URI.create("/metrics")));
@@ -127,10 +127,10 @@ class EsClientTest {
         AtomicReference<String> authHeaderRef = new AtomicReference<>();
         server.createContext("/metrics", exchange -> {
             authHeaderRef.set(exchange.getRequestHeaders().getFirst("Authorization"));
-            respond(exchange, 200, "{}", "application/json");
+            _respond(exchange, 200, "{}", "application/json");
         });
 
-        EsClient client = newClient("basic", "alice", "secret", null, null);
+        EsClient client = _newClient("basic", "alice", "secret", null, null);
         client.get(URI.create("/metrics"));
 
         assertEquals("Basic YWxpY2U6c2VjcmV0", authHeaderRef.get());
@@ -141,10 +141,10 @@ class EsClientTest {
         AtomicReference<String> authHeaderRef = new AtomicReference<>();
         server.createContext("/metrics", exchange -> {
             authHeaderRef.set(exchange.getRequestHeaders().getFirst("Authorization"));
-            respond(exchange, 200, "{}", "application/json");
+            _respond(exchange, 200, "{}", "application/json");
         });
 
-        EsClient client = newClient("bearer", null, null, "token-123", null);
+        EsClient client = _newClient("bearer", null, null, "token-123", null);
         client.get(URI.create("/metrics"));
 
         assertEquals("Bearer token-123", authHeaderRef.get());
@@ -155,10 +155,10 @@ class EsClientTest {
         AtomicReference<String> authHeaderRef = new AtomicReference<>();
         server.createContext("/metrics", exchange -> {
             authHeaderRef.set(exchange.getRequestHeaders().getFirst("Authorization"));
-            respond(exchange, 200, "{}", "application/json");
+            _respond(exchange, 200, "{}", "application/json");
         });
 
-        EsClient client = newClient("api_key", null, null, null, "abc123");
+        EsClient client = _newClient("api_key", null, null, null, "abc123");
         client.get(URI.create("/metrics"));
 
         assertEquals("ApiKey abc123", authHeaderRef.get());
@@ -166,7 +166,7 @@ class EsClientTest {
 
     @Test
     void missingAuthCredentialFailsFast() {
-        EsClient client = newClient("bearer", null, null, null, null);
+        EsClient client = _newClient("bearer", null, null, null, null);
 
         EsClientException exception = assertThrows(EsClientException.class,
                 () -> client.get(URI.create("/metrics")));
@@ -185,20 +185,20 @@ class EsClientTest {
         assertTrue(exception.getCause().getMessage().contains("Failed to load keystore"));
     }
 
-    private EsClient newClient() {
-        return newClient("none", null, null, null, null);
+    private EsClient _newClient() {
+        return _newClient("none", null, null, null, null);
     }
 
-    private EsClient newClient(String authType, String username, String password, String bearerToken, String apiKey) {
+    private EsClient _newClient(String authType, String username, String password, String bearerToken, String apiKey) {
         return new EsClient(baseUrl, authType, username, password, bearerToken, apiKey);
     }
 
-    private static String readBody(HttpExchange exchange) throws IOException {
+    private static String _readBody(HttpExchange exchange) throws IOException {
         byte[] bytes = exchange.getRequestBody().readAllBytes();
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private static void respond(HttpExchange exchange, int statusCode, String body, String contentType) throws IOException {
+    private static void _respond(HttpExchange exchange, int statusCode, String body, String contentType) throws IOException {
         if (contentType != null) {
             exchange.getResponseHeaders().add("Content-Type", contentType);
         }

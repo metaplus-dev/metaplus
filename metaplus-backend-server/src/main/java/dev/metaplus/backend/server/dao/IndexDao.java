@@ -26,14 +26,14 @@ public class IndexDao {
         if (response.isNotFound()) {
             return false;
         }
-        throw failureWithEsResponse("existIndex", targetIndex(index), response);
+        throw _failureWithEsResponse("existIndex", _targetIndex(index), response);
     }
 
     public void createIndex(String index, JsonObject pureStorage) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.put(uri, pureStorage);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("createIndex", targetIndex(index), response);
+            throw _failureWithEsResponse("createIndex", _targetIndex(index), response);
         }
     }
 
@@ -41,7 +41,7 @@ public class IndexDao {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.get(uri);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("readIndex", targetIndex(index), response);
+            throw _failureWithEsResponse("readIndex", _targetIndex(index), response);
         }
         return response.getBody();
     }
@@ -51,7 +51,7 @@ public class IndexDao {
                 .queryParam("reopen", true).build(index);
         EsResponse response = esClient.put(uri, settings);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("updateSettings", targetIndex(index), response);
+            throw _failureWithEsResponse("updateSettings", _targetIndex(index), response);
         }
     }
 
@@ -60,7 +60,7 @@ public class IndexDao {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_mapping").build(index);
         EsResponse response = esClient.put(uri, mappings);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("updateMappings", targetIndex(index), response);
+            throw _failureWithEsResponse("updateMappings", _targetIndex(index), response);
         }
     }
 
@@ -68,7 +68,7 @@ public class IndexDao {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.delete(uri);
         if (!response.isSuccess() && !response.isNotFound()) {
-            throw failureWithEsResponse("deleteIndex", targetIndex(index), response);
+            throw _failureWithEsResponse("deleteIndex", _targetIndex(index), response);
         }
     }
 
@@ -76,16 +76,16 @@ public class IndexDao {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_stats/docs,indexing,search").build(index);
         EsResponse response = esClient.get(uri);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("statsIndex", targetIndex(index), response);
+            throw _failureWithEsResponse("statsIndex", _targetIndex(index), response);
         }
         return response.getBody();
     }
 
-    private String targetIndex(String index) {
+    private String _targetIndex(String index) {
         return "index=" + index;
     }
 
-    private BackendServerException failureWithEsResponse(String operation, String target, EsResponse response) {
+    private BackendServerException _failureWithEsResponse(String operation, String target, EsResponse response) {
         return new BackendServerException("IndexDao." + operation + " failed: target=" + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }

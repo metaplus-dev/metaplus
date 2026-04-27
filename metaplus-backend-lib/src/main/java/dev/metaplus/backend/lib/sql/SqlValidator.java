@@ -23,7 +23,7 @@ public final class SqlValidator {
             }
 
             SqlKind kind = stmts.get(0).getKind();
-            if (!isQueryKind(kind)) {
+            if (!_isQueryKind(kind)) {
                 throw new IllegalArgumentException("Not a query statement");
             }
 
@@ -37,7 +37,7 @@ public final class SqlValidator {
 
     /// private
 
-    private static boolean isQueryKind(SqlKind kind) {
+    private static boolean _isQueryKind(SqlKind kind) {
         if (kind == null) return false;
         return switch (kind) {
             case SELECT, ORDER_BY, UNION, INTERSECT, MINUS, WITH -> true;

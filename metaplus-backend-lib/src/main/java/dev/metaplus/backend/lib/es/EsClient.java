@@ -109,7 +109,7 @@ public class EsClient {
                 "", "", "PKCS12", "", "", "", "PKCS12");
     }
 
-    private RestClient getRestClient() {
+    private RestClient _getRestClient() {
         if (restClient != null) {
             return restClient;
         }
@@ -120,11 +120,11 @@ public class EsClient {
             if (null == baseUrl || baseUrl.isEmpty()) {
                 throw new IllegalStateException("`metaplus.backend.es.baseUrl` is empty.");
             }
-            EsAuthType resolvedAuthType = resolveAuthType();
+            EsAuthType resolvedAuthType = _resolveAuthType();
             restClient = RestClient.builder()
-                    .requestFactory(buildRequestFactory())
+                    .requestFactory(_buildRequestFactory())
                     .messageConverters(converters -> converters.add(0, new SpringMvcSjf4jMessageConverter()))
-                    .defaultHeaders(headers -> applyAuth(headers, resolvedAuthType))
+                    .defaultHeaders(headers -> _applyAuth(headers, resolvedAuthType))
                     .baseUrl(baseUrl)
                     .build();
             return restClient;
@@ -132,7 +132,7 @@ public class EsClient {
     }
 
     public EsResponse get(@NonNull URI uri) {
-        return execute("GET", uri, () -> getRestClient().get()
+        return _execute("GET", uri, () -> _getRestClient().get()
                 .uri(uri)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
@@ -145,16 +145,16 @@ public class EsClient {
     }
 
     public EsResponse post(@NonNull URI uri, JsonObject requestBody) {
-        return execute("POST", uri, requestBody, () -> send(getRestClient().post().uri(uri), requestBody));
+        return _execute("POST", uri, requestBody, () -> _send(_getRestClient().post().uri(uri), requestBody));
     }
 
 
     public EsResponse put(@NonNull URI uri, @NonNull JsonObject requestBody) {
-        return execute("PUT", uri, requestBody, () -> send(getRestClient().put().uri(uri), requestBody));
+        return _execute("PUT", uri, requestBody, () -> _send(_getRestClient().put().uri(uri), requestBody));
     }
 
     public EsResponse delete(@NonNull URI uri) {
-        return execute("DELETE", uri, () -> getRestClient().delete()
+        return _execute("DELETE", uri, () -> _getRestClient().delete()
                 .uri(uri)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {/**/})
@@ -165,7 +165,7 @@ public class EsClient {
     public EsResponse head(@NonNull URI uri) {
         log.debug("ES HEAD {}", uri);
         try {
-            ResponseEntity<Void> response = getRestClient().head()
+            ResponseEntity<Void> response = _getRestClient().head()
                     .uri(uri)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {/**/})
@@ -192,7 +192,7 @@ public class EsClient {
         bulkItemReqList.forEach(it -> sb.append(it.toStringBuilder()));
         log.debug("ES BULK size={}", bulkItemReqList.size());
         try {
-            ResponseEntity<JsonObject> response = getRestClient().post()
+            ResponseEntity<JsonObject> response = _getRestClient().post()
                     .uri("/_bulk")
                     .contentType(MediaType.APPLICATION_NDJSON)
                     .body(sb.toString())
@@ -200,7 +200,7 @@ public class EsClient {
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {/**/})
                     .toEntity(JsonObject.class);
-            EsResponse esResponse = transfer(response);
+            EsResponse esResponse = _transfer(response);
             log.debug("ES BULK -> status={}, errors={}", esResponse.getStatusCode(), esResponse.hasBulkErrors());
             return esResponse;
         } catch (EsClientException e) {
@@ -213,15 +213,15 @@ public class EsClient {
 
     /// private
 
-    private EsAuthType resolveAuthType() {
+    private EsAuthType _resolveAuthType() {
         if (authType == null || authType.trim().isEmpty()) {
             return EsAuthType.NONE;
         }
         return EsAuthType.of(authType);
     }
 
-    private HttpComponentsClientHttpRequestFactory buildRequestFactory() {
-        SSLContext sslContext = buildSslContextIfConfigured();
+    private HttpComponentsClientHttpRequestFactory _buildRequestFactory() {
+        SSLContext sslContext = _buildSslContextIfConfigured();
         if (sslContext == null) {
             return new HttpComponentsClientHttpRequestFactory();
         }
@@ -236,9 +236,9 @@ public class EsClient {
         return new HttpComponentsClientHttpRequestFactory(httpClient);
     }
 
-    private SSLContext buildSslContextIfConfigured() {
-        boolean hasTrustStore = hasText(tlsTrustStorePath);
-        boolean hasKeyStore = hasText(tlsKeyStorePath);
+    private SSLContext _buildSslContextIfConfigured() {
+        boolean hasTrustStore = _hasText(tlsTrustStorePath);
+        boolean hasKeyStore = _hasText(tlsKeyStorePath);
         if (!hasTrustStore && !hasKeyStore) {
             return null;
         }
@@ -247,20 +247,20 @@ public class EsClient {
             KeyManager[] keyManagers = null;
             TrustManager[] trustManagers = null;
             if (hasTrustStore) {
-                KeyStore trustStore = loadKeyStore(
-                        requireText(tlsTrustStorePath, "metaplus.backend.es.tls.trustStorePath"),
-                        requireText(tlsTrustStorePassword, "metaplus.backend.es.tls.trustStorePassword"),
-                        defaultText(tlsTrustStoreType, "PKCS12"));
+                KeyStore trustStore = _loadKeyStore(
+                        _requireText(tlsTrustStorePath, "metaplus.backend.es.tls.trustStorePath"),
+                        _requireText(tlsTrustStorePassword, "metaplus.backend.es.tls.trustStorePassword"),
+                        _defaultText(tlsTrustStoreType, "PKCS12"));
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
                         TrustManagerFactory.getDefaultAlgorithm());
                 trustManagerFactory.init(trustStore);
                 trustManagers = trustManagerFactory.getTrustManagers();
             }
             if (hasKeyStore) {
-                String keyStorePassword = requireText(tlsKeyStorePassword, "metaplus.backend.es.tls.keyStorePassword");
-                String keyPassword = hasText(tlsKeyPassword) ? tlsKeyPassword : keyStorePassword;
-                KeyStore keyStore = loadKeyStore(requireText(tlsKeyStorePath, "metaplus.backend.es.tls.keyStorePath"),
-                        keyStorePassword, defaultText(tlsKeyStoreType, "PKCS12"));
+                String keyStorePassword = _requireText(tlsKeyStorePassword, "metaplus.backend.es.tls.keyStorePassword");
+                String keyPassword = _hasText(tlsKeyPassword) ? tlsKeyPassword : keyStorePassword;
+                KeyStore keyStore = _loadKeyStore(_requireText(tlsKeyStorePath, "metaplus.backend.es.tls.keyStorePath"),
+                        keyStorePassword, _defaultText(tlsKeyStoreType, "PKCS12"));
                 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
                         KeyManagerFactory.getDefaultAlgorithm());
                 keyManagerFactory.init(keyStore, keyPassword.toCharArray());
@@ -276,7 +276,7 @@ public class EsClient {
         }
     }
 
-    private KeyStore loadKeyStore(String pathValue, String password, String type) {
+    private KeyStore _loadKeyStore(String pathValue, String password, String type) {
         try {
             KeyStore keyStore = KeyStore.getInstance(type);
             Path path = Path.of(pathValue);
@@ -291,42 +291,42 @@ public class EsClient {
         }
     }
 
-    private void applyAuth(HttpHeaders headers, EsAuthType resolvedAuthType) {
+    private void _applyAuth(HttpHeaders headers, EsAuthType resolvedAuthType) {
         switch (resolvedAuthType) {
             case NONE:
                 return;
             case BASIC:
-                headers.setBasicAuth(requireText(authUsername, "metaplus.backend.es.auth.username"),
-                        requireText(authPassword, "metaplus.backend.es.auth.password"));
+                headers.setBasicAuth(_requireText(authUsername, "metaplus.backend.es.auth.username"),
+                        _requireText(authPassword, "metaplus.backend.es.auth.password"));
                 return;
             case BEARER:
-                headers.setBearerAuth(requireText(authBearerToken, "metaplus.backend.es.auth.bearerToken"));
+                headers.setBearerAuth(_requireText(authBearerToken, "metaplus.backend.es.auth.bearerToken"));
                 return;
             case API_KEY:
                 headers.set(HttpHeaders.AUTHORIZATION,
-                        "ApiKey " + requireText(authApiKey, "metaplus.backend.es.auth.apiKey"));
+                        "ApiKey " + _requireText(authApiKey, "metaplus.backend.es.auth.apiKey"));
                 return;
             default:
                 throw new IllegalStateException("Unhandled Elasticsearch auth type " + resolvedAuthType + ".");
         }
     }
 
-    private String requireText(String value, String propertyName) {
+    private String _requireText(String value, String propertyName) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalStateException("`" + propertyName + "` is empty.");
         }
         return value;
     }
 
-    private boolean hasText(String value) {
+    private boolean _hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
 
-    private String defaultText(String value, String defaultValue) {
-        return hasText(value) ? value : defaultValue;
+    private String _defaultText(String value, String defaultValue) {
+        return _hasText(value) ? value : defaultValue;
     }
 
-    private EsResponse transfer(ResponseEntity<JsonObject> response) {
+    private EsResponse _transfer(ResponseEntity<JsonObject> response) {
         if (response.getStatusCode().value() == 401) {
             throw new EsClientException("Elasticsearch authentication failed (401 Unauthorized). "
                     + "Check `metaplus.backend.es.auth.*` configuration.");
@@ -338,10 +338,10 @@ public class EsClient {
         return new EsResponse(response.getStatusCode().value(), response.getBody());
     }
 
-    private EsResponse execute(String method, URI uri, Supplier<ResponseEntity<JsonObject>> request) {
+    private EsResponse _execute(String method, URI uri, Supplier<ResponseEntity<JsonObject>> request) {
         log.debug("ES {} {}", method, uri);
         try {
-            EsResponse response = transfer(request.get());
+            EsResponse response = _transfer(request.get());
             log.debug("ES {} {} -> {}", method, uri, response.getStatusCode());
             return response;
         } catch (EsClientException e) {
@@ -351,11 +351,11 @@ public class EsClient {
         }
     }
 
-    private EsResponse execute(String method, URI uri, JsonObject requestBody,
+    private EsResponse _execute(String method, URI uri, JsonObject requestBody,
                                Supplier<ResponseEntity<JsonObject>> request) {
         log.debug("ES {} {} body={}", method, uri, requestBody);
         try {
-            EsResponse response = transfer(request.get());
+            EsResponse response = _transfer(request.get());
             log.debug("ES {} {} -> {}", method, uri, response.getStatusCode());
             return response;
         } catch (EsClientException e) {
@@ -365,7 +365,7 @@ public class EsClient {
         }
     }
 
-    private ResponseEntity<JsonObject> send(@NonNull RestClient.RequestBodySpec requestSpec, JsonObject requestBody) {
+    private ResponseEntity<JsonObject> _send(@NonNull RestClient.RequestBodySpec requestSpec, JsonObject requestBody) {
         if (requestBody != null) {
             requestSpec.contentType(MediaType.APPLICATION_JSON).body(requestBody);
         }

@@ -37,7 +37,7 @@ public class SpringWebFluxSjf4jMessageWriter implements HttpMessageWriter<Object
 
     @Override
     public boolean canWrite(ResolvableType elementType, MediaType mediaType) {
-        return mediaType == null || isJsonMediaType(mediaType);
+        return mediaType == null || _isJsonMediaType(mediaType);
     }
 
     @Override
@@ -47,9 +47,9 @@ public class SpringWebFluxSjf4jMessageWriter implements HttpMessageWriter<Object
         message.getHeaders().setContentType(contentType);
 
         DataBufferFactory bufferFactory = message.bufferFactory();
-        if (isStreamingMediaType(contentType)) {
+        if (_isStreamingMediaType(contentType)) {
             Flux<DataBuffer> bufferFlux = Flux.from(inputStream)
-                    .map(value -> wrapStreamingValue(bufferFactory, value));
+                    .map(value -> _wrapStreamingValue(bufferFactory, value));
             return message.writeAndFlushWith(bufferFlux.map(Mono::just));
         }
 
@@ -66,19 +66,19 @@ public class SpringWebFluxSjf4jMessageWriter implements HttpMessageWriter<Object
     }
 
 
-    private static boolean isStreamingMediaType(MediaType mediaType) {
+    private static boolean _isStreamingMediaType(MediaType mediaType) {
         return APPLICATION_STREAM_JSON.isCompatibleWith(mediaType)
                 || APPLICATION_NDJSON.isCompatibleWith(mediaType);
     }
 
-    private static boolean isJsonMediaType(MediaType mediaType) {
+    private static boolean _isJsonMediaType(MediaType mediaType) {
         return MediaType.APPLICATION_JSON.isCompatibleWith(mediaType)
                 || APPLICATION_ANY_JSON.isCompatibleWith(mediaType)
                 || APPLICATION_NDJSON.isCompatibleWith(mediaType)
                 || mediaType.getSubtype().endsWith("+json");
     }
 
-    private static DataBuffer wrapStreamingValue(DataBufferFactory bufferFactory, Object value) {
+    private static DataBuffer _wrapStreamingValue(DataBufferFactory bufferFactory, Object value) {
         byte[] jsonBytes = Jsons.toJsonBytes(value);
         byte[] payload = Arrays.copyOf(jsonBytes, jsonBytes.length + 1);
         payload[payload.length - 1] = NEWLINE_BYTES[0];

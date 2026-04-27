@@ -54,11 +54,11 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
     void reindexByQueryPagesAllDocsAndKeepsReindexedDocs() {
         String domain = "docdao_reindex_batch";
         indexName = StorageUtil.getDomainIndex(domain);
-        createDomainIndex(indexName);
+        _createDomainIndex(indexName);
 
         int totalDocs = 1005;
         for (int i = 0; i < totalDocs; i++) {
-            String oldFqmn = fqmn(domain, "d" + i);
+            String oldFqmn = _fqmn(domain, "d" + i);
             indexDocument(indexName, oldFqmn, JsonObject.of(
                     "idea", JsonObject.of("fqmn", oldFqmn, "domain", domain),
                     "meta", JsonObject.of("group", "all"),
@@ -79,7 +79,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
         assertEquals(totalDocs, fqmnMapping.size());
         assertEquals(totalDocs, docDao.countByDomain(domain, null));
 
-        String sampleOld = fqmn(domain, "d0");
+        String sampleOld = _fqmn(domain, "d0");
         String sampleNew = sampleOld + "_new";
         assertTrue(docDao.exist(sampleNew, null));
         assertFalse(docDao.exist(sampleOld, null));
@@ -89,11 +89,11 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
     void reindexByQueryDeletesOnlyCapturedOriginalIds() {
         String domain = "docdao_reindex_delete";
         indexName = StorageUtil.getDomainIndex(domain);
-        createDomainIndex(indexName);
+        _createDomainIndex(indexName);
 
-        String oldA = fqmn(domain, "a");
-        String oldB = fqmn(domain, "b");
-        String untouched = fqmn(domain, "c");
+        String oldA = _fqmn(domain, "a");
+        String oldB = _fqmn(domain, "b");
+        String untouched = _fqmn(domain, "c");
 
         indexDocument(indexName, oldA, JsonObject.of(
                 "idea", JsonObject.of("fqmn", oldA, "domain", domain),
@@ -128,7 +128,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
         assertEquals(3, docDao.countByDomain(domain, null));
     }
 
-    private void createDomainIndex(String targetIndexName) {
+    private void _createDomainIndex(String targetIndexName) {
         indexDao.createIndex(targetIndexName, JsonObject.of(
                 "settings", JsonObject.of(
                         "index", JsonObject.of(
@@ -154,7 +154,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
         ));
     }
 
-    private String fqmn(String domain, String name) {
+    private String _fqmn(String domain, String name) {
         return domain + ":mysql:main:" + name;
     }
 }

@@ -6,8 +6,8 @@ import java.net.UnknownHostException;
 
 public final class EnvUtil {
 
-    private static final String HOSTNAME = initHostname();
-    private static final String PROCESS_NAME = initProcessName();
+    private static final String HOSTNAME = _initHostname();
+    private static final String PROCESS_NAME = _initProcessName();
 
     private EnvUtil() {}
 
@@ -20,8 +20,8 @@ public final class EnvUtil {
         return PROCESS_NAME;
     }
 
-    private static String initHostname() {
-        String hostname = firstNonBlank(
+    private static String _initHostname() {
+        String hostname = _firstNonBlank(
                 System.getenv("HOSTNAME"),
                 System.getenv("COMPUTERNAME")
         );
@@ -30,7 +30,7 @@ public final class EnvUtil {
         }
 
         try {
-            return firstNonBlank(
+            return _firstNonBlank(
                     InetAddress.getLocalHost().getHostName(),
                     InetAddress.getLocalHost().getCanonicalHostName()
             );
@@ -39,21 +39,21 @@ public final class EnvUtil {
         }
     }
 
-    private static String initProcessName() {
+    private static String _initProcessName() {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         String pid = runtimeName;
         int at = runtimeName == null ? -1 : runtimeName.indexOf('@');
         if (at > 0) {
             pid = runtimeName.substring(0, at);
         }
-        pid = firstNonBlank(pid);
+        pid = _firstNonBlank(pid);
         if (pid == null) {
             pid = "unknown";
         }
         return pid + "@" + getHostname();
     }
 
-    private static String firstNonBlank(String... values) {
+    private static String _firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null) {
                 String trimmed = value.trim();

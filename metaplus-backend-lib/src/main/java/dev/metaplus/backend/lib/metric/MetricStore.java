@@ -42,10 +42,10 @@ public class MetricStore {
     }
 
     public void refresh() {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(indexName());
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(_indexName());
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("refresh", targetIndex(indexName()), response);
+            throw _failureWithEsResponse("refresh", _targetIndex(_indexName()), response);
         }
     }
 
@@ -54,10 +54,10 @@ public class MetricStore {
         SchemaUtil.requireValid(metric);
 
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{id}")
-                .build(indexName(), genMetricIdHash(metric));
+                .build(_indexName(), genMetricIdHash(metric));
         EsResponse response = esClient.put(uri, metric);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("post", targetMetric(metric), response);
+            throw _failureWithEsResponse("post", _targetMetric(metric), response);
         }
         return response.getResult();
     }
@@ -67,11 +67,11 @@ public class MetricStore {
 
         List<BulkItemReq> bulkItemReqs = new ArrayList<>(metrics.size());
         metrics.forEach(metric -> {
-            bulkItemReqs.add(new BulkItemReq(BulkItemMethod.INDEX, indexName(), genMetricIdHash(metric), metric));
+            bulkItemReqs.add(new BulkItemReq(BulkItemMethod.INDEX, _indexName(), genMetricIdHash(metric), metric));
         });
         EsResponse response = esClient.bulk(bulkItemReqs);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("postBatch", "index=" + indexName() + ", size=" + metrics.size(), response);
+            throw _failureWithEsResponse("postBatch", "index=" + _indexName() + ", size=" + metrics.size(), response);
         }
         return response.getBulkResult();
     }
@@ -82,15 +82,15 @@ public class MetricStore {
 
 
     public List<Metric> get(@Valid @NonNull MetricQuery metricQuery) {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_search").build(indexName());
-        JsonObject reqBody = toSearchRequest(metricQuery);
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_search").build(_indexName());
+        JsonObject reqBody = _toSearchRequest(metricQuery);
         reqBody.put("sort", JsonObject.of("startedAt", "asc"));
         reqBody.put("from", metricQuery.getFrom());
         reqBody.put("size", metricQuery.getSize());
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("get", targetMetricQuery(metricQuery), response);
+            throw _failureWithEsResponse("get", _targetMetricQuery(metricQuery), response);
         }
 
         SearchResponse<Metric> sr = response.getBodyAsSearchResponse(Metric.class);
@@ -100,12 +100,12 @@ public class MetricStore {
 
 
     public Result delete(@Valid @NonNull MetricQuery metricQuery) {
-        URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query").build(indexName());
-        JsonObject reqBody = toSearchRequest(metricQuery);
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query").build(_indexName());
+        JsonObject reqBody = _toSearchRequest(metricQuery);
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("delete", targetMetricQuery(metricQuery), response);
+            throw _failureWithEsResponse("delete", _targetMetricQuery(metricQuery), response);
         }
         return response.getOpResult();
     }
@@ -149,7 +149,7 @@ public class MetricStore {
 
     /// private
 
-    private static JsonObject toSearchRequest(MetricQuery metricQuery) {
+    private static JsonObject _toSearchRequest(MetricQuery metricQuery) {
         Query query = new Query();
         query.addBoolFilterTerm("metricName", metricQuery.getMetricName());
         query.addBoolFilterTerm("assetName", metricQuery.getAssetName());
@@ -164,19 +164,19 @@ public class MetricStore {
         return JsonObject.of("query", query);
     }
 
-    private String indexName() {
+    private String _indexName() {
         return indexName;
     }
 
-    private String targetIndex(String index) {
+    private String _targetIndex(String index) {
         return "index=" + index;
     }
 
-    private String targetMetric(Metric metric) {
+    private String _targetMetric(Metric metric) {
         return "metricId=" + genMetricIdHash(metric);
     }
 
-    private String targetMetricQuery(MetricQuery metricQuery) {
+    private String _targetMetricQuery(MetricQuery metricQuery) {
         return "metricName=" + metricQuery.getMetricName()
                 + ", assetName=" + metricQuery.getAssetName()
                 + ", period=" + metricQuery.getPeriod()
@@ -186,7 +186,7 @@ public class MetricStore {
                 + ", size=" + metricQuery.getSize();
     }
 
-    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+    private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
         return new BackendException("MetricStore." + operation + " failed: target=" + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }

@@ -27,7 +27,7 @@ public class IdGenerator {
     /**
      * Returns a deterministic 2-character base62 code for the input key.
      */
-    private static char[] getKeyCode(String key) {
+    private static char[] _getKeyCode(String key) {
         if (null == key) return new char[]{'0', '0'};
         char[] keyCode = new char[2];
         int hashCode = (key.hashCode() + 1_000_003) & Integer.MAX_VALUE;
@@ -47,7 +47,7 @@ public class IdGenerator {
         buffer[0] = 'm';
         buffer[1] = 'p';
 
-        char[] keyCode = getKeyCode(key);
+        char[] keyCode = _getKeyCode(key);
         buffer[2] = keyCode[0];
         buffer[3] = keyCode[1];
 

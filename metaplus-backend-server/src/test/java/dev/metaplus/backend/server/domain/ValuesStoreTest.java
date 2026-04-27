@@ -18,7 +18,7 @@ class ValuesStoreTest {
         DomainStore domainStore = new DomainStore();
         ValuesStore valuesStore = new ValuesStore(domainStore);
 
-        domainStore.putDomainDoc(domainDoc("base", null, JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
                         "idea", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -27,7 +27,7 @@ class ValuesStoreTest {
                         )
                 )
         )));
-        domainStore.putDomainDoc(domainDoc("child", "base", JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("child", "base", JsonObject.of(
                 "properties", JsonObject.of(
                         "plus", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -87,7 +87,7 @@ class ValuesStoreTest {
         DomainStore domainStore = new DomainStore();
         ValuesStore valuesStore = new ValuesStore(domainStore);
 
-        domainStore.putDomainDoc(domainDoc("domain", null, JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("domain", null, JsonObject.of(
                 "properties", JsonObject.of(
                         "meta", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -113,7 +113,7 @@ class ValuesStoreTest {
         DomainStore domainStore = new DomainStore();
         ValuesStore valuesStore = new ValuesStore(domainStore);
 
-        domainStore.putDomainDoc(domainDoc("base", null, JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
                         "idea", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -122,7 +122,7 @@ class ValuesStoreTest {
                         )
                 )
         )));
-        domainStore.putDomainDoc(domainDoc("child", "base", JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("child", "base", JsonObject.of(
                 "properties", JsonObject.of(
                         "idea", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -146,7 +146,7 @@ class ValuesStoreTest {
         DomainStore domainStore = new DomainStore();
         ValuesStore valuesStore = new ValuesStore(domainStore);
 
-        domainStore.putDomainDoc(domainDoc("base", null, JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
                         "idea", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -155,13 +155,13 @@ class ValuesStoreTest {
                         )
                 )
         )));
-        domainStore.putDomainDoc(domainDoc("child", "base", JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("child", "base", JsonObject.of(
                 "properties", JsonObject.of()
         )));
 
         String scriptV1 = valuesStore.composeScript("child", "");
 
-        domainStore.putDomainDoc(domainDoc("base", null, JsonObject.of(
+        domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
                         "idea", JsonObject.of(
                                 "properties", JsonObject.of(
@@ -178,7 +178,7 @@ class ValuesStoreTest {
         assertFalse(scriptV2.contains("putByPath(ctx._source, 'idea.fqmn', 'v1_' + idea.domain);"));
     }
 
-    private static DomainDoc domainDoc(String name, String template, JsonObject mappings) {
+    private static DomainDoc _domainDoc(String name, String template, JsonObject mappings) {
         DomainDoc domainDoc = new DomainDoc();
         domainDoc.setMetaDomainName(name);
         if (template != null) {

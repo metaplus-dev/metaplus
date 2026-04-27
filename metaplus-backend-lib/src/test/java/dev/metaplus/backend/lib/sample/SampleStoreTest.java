@@ -37,9 +37,9 @@ class SampleStoreTest {
     @Test
     void refreshUsesNormalizedFailureMessage() throws Exception {
         server.createContext("/i_metaplus_sample/_refresh",
-                exchange -> respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
+                exchange -> _respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
 
-        SampleStore sampleStore = newStore();
+        SampleStore sampleStore = _newStore();
 
         BackendException ex = assertThrows(BackendException.class, sampleStore::refresh);
 
@@ -47,7 +47,7 @@ class SampleStoreTest {
                 ex.getMessage());
     }
 
-    private SampleStore newStore() throws Exception {
+    private SampleStore _newStore() throws Exception {
         SampleStore store = new SampleStore();
         Field field = SampleStore.class.getDeclaredField("esClient");
         field.setAccessible(true);
@@ -55,7 +55,7 @@ class SampleStoreTest {
         return store;
     }
 
-    private static void respond(com.sun.net.httpserver.HttpExchange exchange,
+    private static void _respond(com.sun.net.httpserver.HttpExchange exchange,
                                 int statusCode,
                                 String body,
                                 String contentType) throws IOException {

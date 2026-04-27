@@ -45,18 +45,18 @@ public class IdeaFilter {
         this.domain = domain;
         this.system = system;
         this.instance = instance;
-        matchRules.addAll(parseRules(match));
-        excludeRules.addAll(parseRules(exclude));
-        includeRules.addAll(parseRules(include));
+        matchRules.addAll(_parseRules(match));
+        excludeRules.addAll(_parseRules(exclude));
+        includeRules.addAll(_parseRules(include));
     }
 
     public IdeaFilter(@NonNull JsonObject filterConfig) {
         this.domain = filterConfig.getString("domain");
         this.system = filterConfig.getString("system");
         this.instance = filterConfig.getString("instance");
-        matchRules.addAll(parseRules(filterConfig.getString("match")));
-        excludeRules.addAll(parseRules(filterConfig.getString("exclude")));
-        includeRules.addAll(parseRules(filterConfig.getString("include")));
+        matchRules.addAll(_parseRules(filterConfig.getString("match")));
+        excludeRules.addAll(_parseRules(filterConfig.getString("exclude")));
+        includeRules.addAll(_parseRules(filterConfig.getString("include")));
     }
 
 
@@ -104,7 +104,7 @@ public class IdeaFilter {
 
 
 
-    private List<List<FilterRule>> parseRules(String rules) {
+    private List<List<FilterRule>> _parseRules(String rules) {
         List<List<FilterRule>> orList = new ArrayList<>();
         for (String orRule : rules.split(";")) {
             orRule = orRule.trim();
@@ -117,7 +117,7 @@ public class IdeaFilter {
                         if (parts.length == 2) {
                             andList.add(new FilterRule(
                                     parts[0].trim(),
-                                    compilePattern(parts[1].trim())
+                                    _compilePattern(parts[1].trim())
                             ));
                         }
                     }
@@ -128,7 +128,7 @@ public class IdeaFilter {
         return orList;
     }
 
-    private Pattern compilePattern(String pattern) {
+    private Pattern _compilePattern(String pattern) {
         String regex = pattern
                 .replace("*", ".*")
                 .replace("?", ".");

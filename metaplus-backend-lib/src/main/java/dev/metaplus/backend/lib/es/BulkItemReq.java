@@ -16,16 +16,16 @@ public class BulkItemReq {
 
     public StringBuilder toStringBuilder() {
         StringBuilder sb = new StringBuilder();
-        sb.append(buildMetaLine().toJson()).append("\n");
+        sb.append(_buildMetaLine().toJson()).append("\n");
 
-        JsonObject payload = buildPayload();
+        JsonObject payload = _buildPayload();
         if (payload != null) {
             sb.append(payload.toJson()).append("\n");
         }
         return sb;
     }
 
-    private JsonObject buildMetaLine() {
+    private JsonObject _buildMetaLine() {
         JsonObject meta = new JsonObject();
         meta.put("_index", Objects.requireNonNull(index, "index is required"));
         if (id != null && !id.isEmpty()) {
@@ -34,16 +34,16 @@ public class BulkItemReq {
         return JsonObject.of(Objects.requireNonNull(method, "method is required").toString(), meta);
     }
 
-    private JsonObject buildPayload() {
+    private JsonObject _buildPayload() {
         if (method == BulkItemMethod.DELETE) {
             return null;
         }
 
         JsonObject payload = Objects.requireNonNull(body, "body is required");
-        return method == BulkItemMethod.UPDATE ? toUpdatePayload(payload) : payload;
+        return method == BulkItemMethod.UPDATE ? _toUpdatePayload(payload) : payload;
     }
 
-    private JsonObject toUpdatePayload(JsonObject payload) {
+    private JsonObject _toUpdatePayload(JsonObject payload) {
         if (payload.keySet().contains("doc")
                 || payload.keySet().contains("script")
                 || payload.keySet().contains("upsert")

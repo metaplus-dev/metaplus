@@ -36,7 +36,7 @@ class DistributedLockTest {
     @Test
     void lockUsesNormalizedFailureMessage() {
         server.createContext("/i_lock_test/_doc/job-a",
-                exchange -> respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
+                exchange -> _respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
 
         DistributedLock lock = new DistributedLock(new EsClient(baseUrl), "i_lock_test");
 
@@ -50,7 +50,7 @@ class DistributedLockTest {
     @Test
     void lockUsesNormalizedReasonWhenExpiredAtMissing() {
         server.createContext("/i_lock_test/_doc/job-a",
-                exchange -> respond(exchange, 200, "{\"_source\":{\"isReleased\":false}}", "application/json"));
+                exchange -> _respond(exchange, 200, "{\"_source\":{\"isReleased\":false}}", "application/json"));
 
         DistributedLock lock = new DistributedLock(new EsClient(baseUrl), "i_lock_test");
 
@@ -61,7 +61,7 @@ class DistributedLockTest {
                 ex.getMessage());
     }
 
-    private static void respond(com.sun.net.httpserver.HttpExchange exchange,
+    private static void _respond(com.sun.net.httpserver.HttpExchange exchange,
                                 int statusCode,
                                 String body,
                                 String contentType) throws IOException {

@@ -39,10 +39,12 @@ When changing Metaplus, contributors should follow these rules:
 2. Keep `meta` aligned with authoritative sources.
 3. Keep `plus` extensible, but separate from source truth.
 4. Prefer small, additive, explainable changes.
-5. Do not introduce undocumented fields or silent contract changes.
-6. Read existing docs and tests before implementation; if they do not exist, state that clearly.
-7. Maintain branch coverage at **70% or higher**.
-8. Make design decisions and trade-offs explicit.
+5. Avoid over-abstracting methods; if logic is simple and only used locally, keep it inline instead of extracting helper methods prematurely.
+6. Do not introduce undocumented fields or silent contract changes.
+7. Read existing docs and tests before implementation; if they do not exist, state that clearly.
+8. Maintain branch coverage at **70% or higher**.
+9. Make design decisions and trade-offs explicit.
+10. Name internal private methods with a leading underscore in lower camel case, using the form `_xxxYyy`; keep non-private methods in standard camel case.
 
 ---
 

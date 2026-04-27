@@ -10,11 +10,11 @@ class PatchSchemaBindingTest {
 
     @Test
     void patchModelsBindToExpectedJsonSchemas() {
-        assertSchemaRef(PatchRequest.class, "patch_request.json");
-        assertSchemaRef(PatchResponse.class, "patch_response.json");
+        _assertSchemaRef(PatchRequest.class, "patch_request.json");
+        _assertSchemaRef(PatchResponse.class, "patch_response.json");
     }
 
-    private static void assertSchemaRef(Class<?> type, String expectedRef) {
+    private static void _assertSchemaRef(Class<?> type, String expectedRef) {
         ValidJsonSchema annotation = type.getAnnotation(ValidJsonSchema.class);
         assertNotNull(annotation, () -> type.getSimpleName() + " should declare @ValidJsonSchema");
         assertEquals(expectedRef, annotation.ref());

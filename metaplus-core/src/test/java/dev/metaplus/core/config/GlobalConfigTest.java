@@ -39,8 +39,8 @@ class GlobalConfigTest {
         GlobalConfig.put(DIR_KEY, "/global");
 
         MockEnvironment env = new MockEnvironment();
-        env.getPropertySources().addFirst(new MapPropertySource("high", singletonMap(DIR_KEY, "/spring-high")));
-        env.getPropertySources().addLast(new MapPropertySource("low", singletonMap(DIR_KEY, "/spring-low")));
+        env.getPropertySources().addFirst(new MapPropertySource("high", _singletonMap(DIR_KEY, "/spring-high")));
+        env.getPropertySources().addLast(new MapPropertySource("low", _singletonMap(DIR_KEY, "/spring-low")));
 
         GlobalConfig.loadSpringEnv(env, PREFIX);
 
@@ -70,7 +70,7 @@ class GlobalConfigTest {
         GlobalConfig.loadSpringEnv(firstEnv, PREFIX);
 
         MockEnvironment secondEnv = new MockEnvironment();
-        secondEnv.getPropertySources().addFirst(new MapPropertySource("second", singletonMap(DIR_KEY, "/second")));
+        secondEnv.getPropertySources().addFirst(new MapPropertySource("second", _singletonMap(DIR_KEY, "/second")));
         GlobalConfig.loadSpringEnv(secondEnv, PREFIX);
 
         assertEquals("/second", GlobalConfig.getString(DIR_KEY));
@@ -80,7 +80,7 @@ class GlobalConfigTest {
     @Test
     void putPropertiesResolvesPlaceholdersAgainstLoadedSpringValues() {
         MockEnvironment env = new MockEnvironment();
-        env.getPropertySources().addFirst(new MapPropertySource("metaplus", singletonMap(BASE_KEY, "/spring-base")));
+        env.getPropertySources().addFirst(new MapPropertySource("metaplus", _singletonMap(BASE_KEY, "/spring-base")));
         GlobalConfig.loadSpringEnv(env, PREFIX);
 
         Properties props = new Properties();
@@ -170,12 +170,12 @@ class GlobalConfigTest {
 
             MockEnvironment firstEnv = new MockEnvironment();
             firstEnv.getPropertySources().addFirst(new MapPropertySource("first",
-                    singletonMap(PREFIX + "alpha", "a")));
+                    _singletonMap(PREFIX + "alpha", "a")));
             GlobalConfig.loadSpringEnv(firstEnv);
 
             MockEnvironment secondEnv = new MockEnvironment();
             secondEnv.getPropertySources().addFirst(new MapPropertySource("second",
-                    singletonMap(PREFIX + "beta", "b")));
+                    _singletonMap(PREFIX + "beta", "b")));
             GlobalConfig.loadSpringEnv(secondEnv);
 
             assertNull(GlobalConfig.get(PREFIX + "alpha"));
@@ -197,7 +197,7 @@ class GlobalConfigTest {
         assertThrows(NullPointerException.class, () -> GlobalConfig.loadSpringEnv(null));
     }
 
-    private static Map<String, Object> singletonMap(String key, Object value) {
+    private static Map<String, Object> _singletonMap(String key, Object value) {
         Map<String, Object> map = new HashMap<>();
         map.put(key, value);
         return map;

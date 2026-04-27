@@ -38,7 +38,7 @@ public class RuntimeStateStore {
      */
     public RuntimeState get(@NonNull String fqmn) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_doc/{fqmn}")
-                .build(indexName(), fqmn);
+                .build(_indexName(), fqmn);
 
         EsResponse response = esClient.get(uri);
         if (response.isNotFound()) {
@@ -46,23 +46,23 @@ public class RuntimeStateStore {
         } else if (response.isSuccess()) {
             return response.getInBody("_source", RuntimeState.class);
         } else {
-            throw failureWithEsResponse("get", targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("get", _targetFqmn(fqmn), response);
         }
     }
 
     /** Marks that the source-aligned object was upserted. */
     public void markUpserted(@NonNull String fqmn) {
-        setField(fqmn, "upsertedAt", DateUtil.now());
+        _setField(fqmn, "upsertedAt", DateUtil.now());
     }
 
     /** Marks that the source-aligned object was deleted. */
     public void markDeleted(@NonNull String fqmn) {
-        setField(fqmn, "deletedAt", DateUtil.now());
+        _setField(fqmn, "deletedAt", DateUtil.now());
     }
 
     /** Marks one runtime job as completed for the target FQMN. */
     public void markJobCompleted(@NonNull String fqmn, @NonNull RuntimeJobType jobType) {
-        setField(fqmn, jobType.completedAtFieldName(), DateUtil.now());
+        _setField(fqmn, jobType.completedAtFieldName(), DateUtil.now());
     }
 
     /**
@@ -79,7 +79,7 @@ public class RuntimeStateStore {
                                                            int size,
                                                            JsonArray searchAfter) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_search")
-                .build(indexName());
+                .build(_indexName());
 
         String completedAtFieldName = jobType.completedAtFieldName();
 
@@ -109,7 +109,7 @@ public class RuntimeStateStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("searchPendingByJob",
+            throw _failureWithEsResponse("searchPendingByJob",
                     "domain=" + domainName + ", jobType=" + jobType + ", lastCompletedAtEnd=" + lastCompletedAtEnd
                             + ", size=" + size + ", searchAfter=" + searchAfter,
                     response);
@@ -125,7 +125,7 @@ public class RuntimeStateStore {
      */
     public Result clearByDomain(@NonNull String domainName) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_delete_by_query")
-                .build(indexName());
+                .build(_indexName());
 
         Query query = new Query();
         query.addBoolFilterTerm("idea.domain", domainName);
@@ -133,7 +133,7 @@ public class RuntimeStateStore {
 
         EsResponse response = esClient.post(uri, reqBody);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("clearByDomain", targetDomain(domainName), response);
+            throw _failureWithEsResponse("clearByDomain", _targetDomain(domainName), response);
         }
         return response.getResult();
     }
@@ -141,9 +141,9 @@ public class RuntimeStateStore {
 
     /// private
 
-    private void setField(@NonNull String fqmn, @NonNull String fieldName, @NonNull Object fieldValue) {
+    private void _setField(@NonNull String fqmn, @NonNull String fieldName, @NonNull Object fieldValue) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}")
-                .build(indexName(), fqmn);
+                .build(_indexName(), fqmn);
 
         JsonObject body = JsonObject.of(
                 "doc", JsonObject.of(
@@ -152,25 +152,25 @@ public class RuntimeStateStore {
                 "doc_as_upsert", true);
         EsResponse response = esClient.post(uri, body);
         if (!response.isSuccess()) {
-            throw failureWithEsResponse("setField",
-                    targetFqmn(fqmn) + ", fieldName=" + fieldName + ", fieldValue=" + fieldValue,
+            throw _failureWithEsResponse("setField",
+                    _targetFqmn(fqmn) + ", fieldName=" + fieldName + ", fieldValue=" + fieldValue,
                     response);
         }
     }
 
-    private String indexName() {
+    private String _indexName() {
         return indexName;
     }
 
-    private String targetFqmn(String fqmn) {
+    private String _targetFqmn(String fqmn) {
         return "fqmn=" + fqmn;
     }
 
-    private String targetDomain(String domainName) {
+    private String _targetDomain(String domainName) {
         return "domain=" + domainName;
     }
 
-    private BackendException failureWithEsResponse(String operation, String target, EsResponse response) {
+    private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
         return new BackendException("RuntimeStateStore." + operation + " failed: target=" + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }

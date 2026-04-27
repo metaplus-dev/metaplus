@@ -40,7 +40,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @Test
     void createReadExistAndDeleteRoundTripAgainstRealEs() {
-        String indexName = newIndexName();
+        String indexName = _newIndexName();
 
         indexDao.createIndex(indexName, JsonObject.of(
                 "settings", JsonObject.of(
@@ -74,7 +74,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @Test
     void existIndexReturnsFalseForMissingIndex() {
-        assertFalse(indexDao.existIndex(newIndexName()));
+        assertFalse(indexDao.existIndex(_newIndexName()));
     }
 
     @Test
@@ -86,12 +86,12 @@ class IndexDaoIT extends EsIntegrationTestSupport {
     @Test
     void readIndexThrowsForMissingIndex() {
         assertThrows(BackendServerException.class,
-                () -> indexDao.readIndex(newIndexName()));
+                () -> indexDao.readIndex(_newIndexName()));
     }
 
     @Test
     void updateSettingsAppliesSettingsToExistingIndex() {
-        String indexName = createIndex();
+        String indexName = _createIndex();
 
         indexDao.updateSettings(indexName, JsonObject.of(
                 "index", JsonObject.of(
@@ -107,7 +107,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @Test
     void updateMappingsAddsFieldsToExistingIndex() {
-        String indexName = createIndex();
+        String indexName = _createIndex();
 
         indexDao.updateMappings(indexName, JsonObject.of(
                 "properties", JsonObject.of(
@@ -124,7 +124,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @Test
     void deleteIndexIgnoresMissingIndex() {
-        assertDoesNotThrow(() -> indexDao.deleteIndex(newIndexName()));
+        assertDoesNotThrow(() -> indexDao.deleteIndex(_newIndexName()));
     }
 
     @Test
@@ -135,7 +135,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @Test
     void statsIndexReturnsIndexedDocumentCounts() {
-        String indexName = createIndex();
+        String indexName = _createIndex();
         indexDocument(indexName, "doc-1", JsonObject.of("name", "orders"));
         refreshIndex(indexName);
 
@@ -149,8 +149,8 @@ class IndexDaoIT extends EsIntegrationTestSupport {
         assertEquals("1", String.valueOf(count));
     }
 
-    private String createIndex() {
-        String indexName = newIndexName();
+    private String _createIndex() {
+        String indexName = _newIndexName();
         indexDao.createIndex(indexName, JsonObject.of(
                 "settings", JsonObject.of(
                         "index", JsonObject.of(
@@ -167,7 +167,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
         return indexName;
     }
 
-    private String newIndexName() {
+    private String _newIndexName() {
         String indexName = uniqueIndexName("i_metaplus_indexdao");
         indexesToDelete.add(indexName);
         return indexName;

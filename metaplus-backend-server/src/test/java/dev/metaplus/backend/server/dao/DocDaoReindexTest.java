@@ -64,16 +64,16 @@ class DocDaoReindexTest {
                 throw new IllegalStateException("Unexpected uri: " + uri);
             }
             if (reindexCall.incrementAndGet() == 1) {
-                return success(JsonObject.of("created", 1));
+                return _success(JsonObject.of("created", 1));
             }
             return new EsResponse(500, JsonObject.of("error", "boom"));
         });
-        when(esClient.get(any(URI.class))).thenReturn(success(JsonObject.of(
+        when(esClient.get(any(URI.class))).thenReturn(_success(JsonObject.of(
                 "_source", JsonObject.of("idea", JsonObject.of("fqmn", newFqmn))
         )));
 
         MetaplusException ex = assertThrows(MetaplusException.class,
-                () -> docDao.reindex(oldFqmn, doc(newFqmn), "ctx._source.x = 1;", null));
+                () -> docDao.reindex(oldFqmn, _doc(newFqmn), "ctx._source.x = 1;", null));
 
         assertTrue(ex.getMessage().contains("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=3, status=500"));
         verify(esClient, never()).delete(any(URI.class));
@@ -85,7 +85,7 @@ class DocDaoReindexTest {
         patchOptions.setExecutionMode(PatchOptions.ExecutionMode.ASYNC);
 
         MetaplusException ex = assertThrows(MetaplusException.class,
-                () -> docDao.reindex("old:mysql:main:t1", doc("new:mysql:main:t1"), "ctx._source.x = 1;", patchOptions));
+                () -> docDao.reindex("old:mysql:main:t1", _doc("new:mysql:main:t1"), "ctx._source.x = 1;", patchOptions));
 
         assertEquals("DocDao.reindex failed: target=patchOptions, reason=executionMode=ASYNC is not supported", ex.getMessage());
         verify(esClient, never()).post(any(URI.class), any(JsonObject.class));
@@ -104,14 +104,14 @@ class DocDaoReindexTest {
                 throw new IllegalStateException("Unexpected uri: " + uri);
             }
             reindexBodies.add(body);
-            return success(JsonObject.of("created", 1));
+            return _success(JsonObject.of("created", 1));
         });
-        when(esClient.get(any(URI.class))).thenReturn(success(JsonObject.of(
+        when(esClient.get(any(URI.class))).thenReturn(_success(JsonObject.of(
                 "_source", JsonObject.of("idea", JsonObject.of("fqmn", newFqmn))
         )));
-        when(esClient.delete(any(URI.class))).thenReturn(success(JsonObject.of("result", "deleted")));
+        when(esClient.delete(any(URI.class))).thenReturn(_success(JsonObject.of("result", "deleted")));
 
-        docDao.reindex(oldFqmn, doc(newFqmn), "ctx._source.x = 1;", null);
+        docDao.reindex(oldFqmn, _doc(newFqmn), "ctx._source.x = 1;", null);
 
         assertEquals(2, reindexBodies.size());
         assertEquals("i_metaplus_domain_old", reindexBodies.get(0).getJsonObject("source").getString("index"));
@@ -123,13 +123,13 @@ class DocDaoReindexTest {
     void reindexRejectsUnchangedTransformedFqmn() {
         String fqmn = "old:mysql:main:t1";
 
-        when(esClient.post(any(URI.class), any(JsonObject.class))).thenReturn(success(JsonObject.of("created", 1)));
-        when(esClient.get(any(URI.class))).thenReturn(success(JsonObject.of(
+        when(esClient.post(any(URI.class), any(JsonObject.class))).thenReturn(_success(JsonObject.of("created", 1)));
+        when(esClient.get(any(URI.class))).thenReturn(_success(JsonObject.of(
                 "_source", JsonObject.of("idea", JsonObject.of("fqmn", fqmn))
         )));
 
         MetaplusException ex = assertThrows(MetaplusException.class,
-                () -> docDao.reindex(fqmn, doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
+                () -> docDao.reindex(fqmn, _doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
 
         assertEquals("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=2, reason=transformed fqmn is unchanged", ex.getMessage());
         verify(esClient, never()).delete(any(URI.class));
@@ -139,25 +139,25 @@ class DocDaoReindexTest {
     void reindexRejectsTransformedDomainMismatch() {
         String fqmn = "old:mysql:main:t1";
 
-        when(esClient.post(any(URI.class), any(JsonObject.class))).thenReturn(success(JsonObject.of("created", 1)));
-        when(esClient.get(any(URI.class))).thenReturn(success(JsonObject.of(
+        when(esClient.post(any(URI.class), any(JsonObject.class))).thenReturn(_success(JsonObject.of("created", 1)));
+        when(esClient.get(any(URI.class))).thenReturn(_success(JsonObject.of(
                 "_source", JsonObject.of("idea", JsonObject.of("fqmn", "other:mysql:main:t1"))
         )));
 
         MetaplusException ex = assertThrows(MetaplusException.class,
-                () -> docDao.reindex(fqmn, doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
+                () -> docDao.reindex(fqmn, _doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
 
         assertEquals("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=2, reason=transformed domain does not match target doc domain", ex.getMessage());
         verify(esClient, never()).delete(any(URI.class));
     }
 
-    private static MetaplusDoc doc(String fqmn) {
+    private static MetaplusDoc _doc(String fqmn) {
         MetaplusDoc doc = new MetaplusDoc();
         doc.setIdea(Idea.of(fqmn));
         return doc;
     }
 
-    private static EsResponse success(JsonObject body) {
+    private static EsResponse _success(JsonObject body) {
         return new EsResponse(200, body);
     }
 }

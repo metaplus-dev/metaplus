@@ -49,18 +49,18 @@ public final class ValueExprUtil {
         int offset = 0;
         while (matcher.find()) {
             if (matcher.start() > offset) {
-                parts.add(toPainlessStringLiteral(template.substring(offset, matcher.start())));
+                parts.add(_toPainlessStringLiteral(template.substring(offset, matcher.start())));
             }
-            parts.add(normalizeRefExpr(matcher.group(1)));
+            parts.add(_normalizeRefExpr(matcher.group(1)));
             offset = matcher.end();
         }
         if (offset < template.length()) {
-            parts.add(toPainlessStringLiteral(template.substring(offset)));
+            parts.add(_toPainlessStringLiteral(template.substring(offset)));
         }
         return parts.isEmpty() ? "''" : String.join(" + ", parts);
     }
 
-    private static String normalizeRefExpr(String expr) {
+    private static String _normalizeRefExpr(String expr) {
         String trimmed = expr == null ? "" : expr.trim();
         if (!SAFE_REF_PATTERN.matcher(trimmed).matches()) {
             throw new BackendServerException("Unsafe $value placeholder reference: " + expr);
@@ -68,7 +68,7 @@ public final class ValueExprUtil {
         return trimmed;
     }
 
-    private static String toPainlessStringLiteral(String value) {
+    private static String _toPainlessStringLiteral(String value) {
         return "'" + value
                 .replace("\\", "\\\\")
                 .replace("'", "\\'")

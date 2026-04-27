@@ -37,7 +37,7 @@ class MetricStoreTest {
     @Test
     void refreshUsesNormalizedFailureMessage() {
         server.createContext("/i_metric_test/_refresh",
-                exchange -> respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
+                exchange -> _respond(exchange, 500, "{\"error\":\"boom\"}", "application/json"));
 
         MetricStore metricStore = new MetricStore(new EsClient(baseUrl), "i_metric_test");
 
@@ -50,7 +50,7 @@ class MetricStoreTest {
     @Test
     void getUsesNormalizedFailureMessage() {
         server.createContext("/i_metric_test/_search",
-                exchange -> respond(exchange, 500, "{\"error\":\"bad_metric\"}", "application/json"));
+                exchange -> _respond(exchange, 500, "{\"error\":\"bad_metric\"}", "application/json"));
 
         MetricStore metricStore = new MetricStore(new EsClient(baseUrl), "i_metric_test");
         MetricQuery query = new MetricQuery();
@@ -65,7 +65,7 @@ class MetricStoreTest {
                 ex.getMessage());
     }
 
-    private static void respond(com.sun.net.httpserver.HttpExchange exchange,
+    private static void _respond(com.sun.net.httpserver.HttpExchange exchange,
                                 int statusCode,
                                 String body,
                                 String contentType) throws IOException {

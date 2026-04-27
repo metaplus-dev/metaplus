@@ -69,27 +69,27 @@ class DocDaoReindexByQueryTest {
             if ("/_reindex".equals(path)) {
                 int call = reindexCalls.incrementAndGet();
                 if (call == 1) {
-                    return success(JsonObject.of("created", total));
+                    return _success(JsonObject.of("created", total));
                 }
-                return success(JsonObject.of("created", total));
+                return _success(JsonObject.of("created", total));
             }
 
             if (path != null && path.endsWith("/_search")) {
                 searchBodies.add(body);
                 int call = searchCalls.getAndIncrement();
                 if (call == 0) {
-                    return success(searchPage(0, 1000));
+                    return _success(_searchPage(0, 1000));
                 }
                 if (call == 1) {
-                    return success(searchPage(1000, 5));
+                    return _success(_searchPage(1000, 5));
                 }
-                return success(emptySearchPage(total));
+                return _success(_emptySearchPage(total));
             }
 
             if (path != null && path.endsWith("/_delete_by_query")) {
                 deleteBodies.add(body);
                 int deleted = body.getJsonObject("query").getJsonObject("ids").getJsonArray("values").size();
-                return success(JsonObject.of("deleted", deleted));
+                return _success(JsonObject.of("deleted", deleted));
             }
 
             throw new IllegalStateException("Unexpected ES uri: " + uri);
@@ -129,17 +129,17 @@ class DocDaoReindexByQueryTest {
             String path = uri.getPath();
 
             if ("/_reindex".equals(path)) {
-                return success(JsonObject.of("created", 2));
+                return _success(JsonObject.of("created", 2));
             }
             if (path != null && path.endsWith("/_search")) {
                 if (searchCalls.getAndIncrement() == 0) {
-                    return success(searchPage(0, 2));
+                    return _success(_searchPage(0, 2));
                 }
-                return success(emptySearchPage(2));
+                return _success(_emptySearchPage(2));
             }
             if (path != null && path.endsWith("/_delete_by_query")) {
                 deleteBodies.add(body);
-                return success(JsonObject.of("deleted", 2));
+                return _success(JsonObject.of("deleted", 2));
             }
             throw new IllegalStateException("Unexpected ES uri: " + uri);
         });
@@ -180,11 +180,11 @@ class DocDaoReindexByQueryTest {
             URI uri = invocation.getArgument(0);
             String path = uri.getPath();
             if ("/_reindex".equals(path)) {
-                return success(JsonObject.of("created", 1));
+                return _success(JsonObject.of("created", 1));
             }
             if (path != null && path.endsWith("/_search")) {
                 if (searchCalls.getAndIncrement() == 0) {
-                    return success(JsonObject.of(
+                    return _success(JsonObject.of(
                             "hits", JsonObject.of(
                                     "total", JsonObject.of("value", 1),
                                     "hits", JsonArray.of(JsonObject.of(
@@ -195,10 +195,10 @@ class DocDaoReindexByQueryTest {
                             )
                     ));
                 }
-                return success(emptySearchPage(1));
+                return _success(_emptySearchPage(1));
             }
             if (path != null && path.endsWith("/_delete_by_query")) {
-                return success(JsonObject.of("deleted", 1));
+                return _success(JsonObject.of("deleted", 1));
             }
             throw new IllegalStateException("Unexpected ES uri: " + uri);
         });
@@ -212,11 +212,11 @@ class DocDaoReindexByQueryTest {
         assertEquals("DocDao.reindexByQuery failed: target=domain=demo, step=2, reason=cross-domain move is not supported for demo:mysql:main:n0", ex.getMessage());
     }
 
-    private static EsResponse success(JsonObject body) {
+    private static EsResponse _success(JsonObject body) {
         return new EsResponse(200, body);
     }
 
-    private static JsonObject searchPage(int start, int size) {
+    private static JsonObject _searchPage(int start, int size) {
         JsonArray hits = new JsonArray();
         for (int i = start; i < start + size; i++) {
             String oldFqmn = "demo:mysql:main:n" + i;
@@ -234,7 +234,7 @@ class DocDaoReindexByQueryTest {
         );
     }
 
-    private static JsonObject emptySearchPage(int total) {
+    private static JsonObject _emptySearchPage(int total) {
         return JsonObject.of(
                 "hits", JsonObject.of(
                         "total", JsonObject.of("value", total),
