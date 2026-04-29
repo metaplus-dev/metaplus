@@ -134,7 +134,7 @@ class RuntimeStateStoreTest {
         BackendException ex = assertThrows(BackendException.class,
                 () -> store.get("data:system:instance:entity"));
 
-        assertEquals("RuntimeStateStore.get failed: target=fqmn=data:system:instance:entity, status=500, body=J{error=boom}",
+        assertEquals("RuntimeStateStore.get failed for fqmn=data:system:instance:entity, status=500, body=J{error=boom}",
                 ex.getMessage());
     }
 

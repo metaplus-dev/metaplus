@@ -16,6 +16,11 @@
     "self": {
       "type": "object",
       "properties": {
+        "idea": {
+          "properties": {
+            "domain": {"const": "domain"}
+          }
+        },
         "meta": {
           "type": "object",
           "properties": {

@@ -50,7 +50,6 @@ public class MetaplusDoc extends JsonObject {
     protected JsonObject edit;
 
     // Idea
-
     public String getIdeaFqmn() {
         return idea.getFqmn();
     }
@@ -68,6 +67,7 @@ public class MetaplusDoc extends JsonObject {
     }
 
     // Edit
+    private static final JsonPath PATH_EDIT_META = JsonPath.compile("$.edit.meta");
     private static final JsonPath PATH_EDIT_META_VERSION = JsonPath.compile("$.edit.meta.version");
     private static final JsonPath PATH_EDIT_META_CREATED_AT = JsonPath.compile("$.edit.meta.createdAt");
     private static final JsonPath PATH_EDIT_META_CREATED_BY = JsonPath.compile("$.edit.meta.createdBy");
@@ -77,64 +77,130 @@ public class MetaplusDoc extends JsonObject {
     private static final JsonPath PATH_EDIT_META_DELETED_BY = JsonPath.compile("$.edit.meta.deletedBy");
     private static final JsonPath PATH_EDIT_META_RESTORED_AT = JsonPath.compile("$.edit.meta.restoredAt");
     private static final JsonPath PATH_EDIT_META_RESTORED_BY = JsonPath.compile("$.edit.meta.restoredBy");
+    private static final JsonPath PATH_EDIT_PLUS = JsonPath.compile("$.edit.plus");
+    private static final JsonPath PATH_EDIT_PLUS_VERSION = JsonPath.compile("$.edit.plus.version");
+    private static final JsonPath PATH_EDIT_PLUS_UPDATED_AT = JsonPath.compile("$.edit.plus.updatedAt");
+    private static final JsonPath PATH_EDIT_PLUS_UPDATED_BY = JsonPath.compile("$.edit.plus.updatedBy");
 
-    public int getMetaVersion() {
-        return Jsons.cachedPath("$.edit.meta.version").getInt(this, 0);
-    }
-    public void setMetaVersion(int metaVersion) {
-        Jsons.cachedPath("$.edit.meta.version").ensurePut(this, metaVersion);
-    }
-    public Instant getMetaCreatedAt() {
-        return Jsons.cachedPath("$.edit.meta.createdAt").get(this, Instant.class);
-    }
-    public String getMetaCreatedBy() {
-        return Jsons.cachedPath("$.edit.meta.createdBy").getString(this);
-    }
-    public Instant getMetaUpdatedAt() {
-        return Jsons.cachedPath("$.edit.meta.updatedAt").get(this, Instant.class);
-    }
-    public String getMetaUpdatedBy() {
-        return Jsons.cachedPath("$.edit.meta.updatedBy").getString(this);
-    }
-    public Instant getMetaDeletedAt() {
-        return Jsons.cachedPath("$.edit.meta.deletedAt").get(this, Instant.class);
-    }
-    public String getMetaDeletedBy() {
-        return Jsons.cachedPath("$.edit.meta.deletedBy").getString(this);
-    }
-    public Instant getMetaRestoredAt() {
-        return Jsons.cachedPath("$.edit.meta.restoredAt").get(this, Instant.class);
-    }
-    public String getMetaRestoredBy() {
-        return Jsons.cachedPath("$.edit.meta.restoredBy").getString(this);
+    public JsonObject getEditMeta() {
+        return PATH_EDIT_META.getJsonObject(this);
     }
 
-    public int getPlusVersion() {
-        return Jsons.cachedPath("$.edit.plus.version").getInt(this, 0);
-    }
-    public Instant getPlusCreatedAt() {
-        return Jsons.cachedPath("$.edit.plus.createdAt").get(this, Instant.class);
-    }
-    public String getPlusCreatedBy() {
-        return Jsons.cachedPath("$.edit.plus.createdBy").getString(this);
-    }
-    public Instant getPlusUpdatedAt() {
-        return Jsons.cachedPath("$.edit.plus.updatedAt").get(this, Instant.class);
-    }
-    public String getPlusUpdatedBy() {
-        return Jsons.cachedPath("$.edit.plus.updatedBy").getString(this);
-    }
-    public Instant getPlusDeletedAt() {
-        return Jsons.cachedPath("$.edit.plus.deletedAt").get(this, Instant.class);
-    }
-    public String getPlusDeletedBy() {
-        return Jsons.cachedPath("$.edit.plus.deletedBy").getString(this);
-    }
-    public Instant getPlusRestoredAt() {
-        return Jsons.cachedPath("$.edit.plus.restoredAt").get(this, Instant.class);
-    }
-    public String getPlusRestoredBy() {
-        return Jsons.cachedPath("$.edit.plus.restoredBy").getString(this);
+    public void setEditMeta(JsonObject value) {
+        PATH_EDIT_META.ensurePut(this, value);
     }
 
+    public int getEditMetaVersion() {
+        return PATH_EDIT_META_VERSION.getInt(this, 0);
+    }
+
+    public void setEditMetaVersion(int value) {
+        PATH_EDIT_META_VERSION.ensurePut(this, value);
+    }
+
+    /** Canonical UTC timestamp represented as an RFC 3339 date-time string. */
+    public Instant getEditMetaCreatedAt() {
+        return PATH_EDIT_META_CREATED_AT.get(this, Instant.class);
+    }
+
+    public void setEditMetaCreatedAt(Instant value) {
+        PATH_EDIT_META_CREATED_AT.ensurePut(this, value);
+    }
+
+    /** Human or agent identifier that performed an operation. */
+    public String getEditMetaCreatedBy() {
+        return PATH_EDIT_META_CREATED_BY.getString(this);
+    }
+
+    public void setEditMetaCreatedBy(String value) {
+        PATH_EDIT_META_CREATED_BY.ensurePut(this, value);
+    }
+
+    /** Canonical UTC timestamp represented as an RFC 3339 date-time string. */
+    public Instant getEditMetaUpdatedAt() {
+        return PATH_EDIT_META_UPDATED_AT.get(this, Instant.class);
+    }
+
+    public void setEditMetaUpdatedAt(Instant value) {
+        PATH_EDIT_META_UPDATED_AT.ensurePut(this, value);
+    }
+
+    /** Human or agent identifier that performed an operation. */
+    public String getEditMetaUpdatedBy() {
+        return PATH_EDIT_META_UPDATED_BY.getString(this);
+    }
+
+    public void setEditMetaUpdatedBy(String value) {
+        PATH_EDIT_META_UPDATED_BY.ensurePut(this, value);
+    }
+
+    /** Canonical UTC timestamp represented as an RFC 3339 date-time string. */
+    public Instant getEditMetaDeletedAt() {
+        return PATH_EDIT_META_DELETED_AT.get(this, Instant.class);
+    }
+
+    public void setEditMetaDeletedAt(Instant value) {
+        PATH_EDIT_META_DELETED_AT.ensurePut(this, value);
+    }
+
+    /** Human or agent identifier that performed an operation. */
+    public String getEditMetaDeletedBy() {
+        return PATH_EDIT_META_DELETED_BY.getString(this);
+    }
+
+    public void setEditMetaDeletedBy(String value) {
+        PATH_EDIT_META_DELETED_BY.ensurePut(this, value);
+    }
+
+    /** Canonical UTC timestamp represented as an RFC 3339 date-time string. */
+    public Instant getEditMetaRestoredAt() {
+        return PATH_EDIT_META_RESTORED_AT.get(this, Instant.class);
+    }
+
+    public void setEditMetaRestoredAt(Instant value) {
+        PATH_EDIT_META_RESTORED_AT.ensurePut(this, value);
+    }
+
+    /** Human or agent identifier that performed an operation. */
+    public String getEditMetaRestoredBy() {
+        return PATH_EDIT_META_RESTORED_BY.getString(this);
+    }
+
+    public void setEditMetaRestoredBy(String value) {
+        PATH_EDIT_META_RESTORED_BY.ensurePut(this, value);
+    }
+
+    public JsonObject getEditPlus() {
+        return PATH_EDIT_PLUS.getJsonObject(this);
+    }
+
+    public void setEditPlus(JsonObject value) {
+        PATH_EDIT_PLUS.ensurePut(this, value);
+    }
+
+    public int getEditPlusVersion() {
+        return PATH_EDIT_PLUS_VERSION.getInt(this, 0);
+    }
+
+    public void setEditPlusVersion(int value) {
+        PATH_EDIT_PLUS_VERSION.ensurePut(this, value);
+    }
+
+    /** Canonical UTC timestamp represented as an RFC 3339 date-time string. */
+    public Instant getEditPlusUpdatedAt() {
+        return PATH_EDIT_PLUS_UPDATED_AT.get(this, Instant.class);
+    }
+
+    public void setEditPlusUpdatedAt(Instant value) {
+        PATH_EDIT_PLUS_UPDATED_AT.ensurePut(this, value);
+    }
+
+    /** Human or agent identifier that performed an operation. */
+    public String getEditPlusUpdatedBy() {
+        return PATH_EDIT_PLUS_UPDATED_BY.getString(this);
+    }
+
+    public void setEditPlusUpdatedBy(String value) {
+        PATH_EDIT_PLUS_UPDATED_BY.ensurePut(this, value);
+    }
 }

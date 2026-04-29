@@ -114,7 +114,7 @@ public class ValuesStore {
     private final Map<String, Map<String, String>> domainValueExprsCache = new ConcurrentHashMap<>();
     private final Map<String, DerivedScriptCacheEntry> domainDerivedScriptCache = new ConcurrentHashMap<>();
 
-    public void putFromDomainDoc(DomainDoc domainDoc) {
+    public void putDomainDoc(DomainDoc domainDoc) {
         putFromMappings(domainDoc.getMetaDomainName(), domainDoc.getMetaStorageMappings());
     }
 
@@ -134,7 +134,7 @@ public class ValuesStore {
         domainDerivedScriptCache.clear();
     }
 
-    public void deleteByDomain(String domain) {
+    public void deleteDomain(String domain) {
         domainValueExprsCache.remove(domain);
         domainDerivedScriptCache.clear();
     }

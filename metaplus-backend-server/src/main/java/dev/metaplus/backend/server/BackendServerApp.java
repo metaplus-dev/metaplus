@@ -14,7 +14,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 
 @Slf4j
 @SpringBootApplication(scanBasePackages = {
-        "com.outofstack.metaplus.backend"
+        "dev.metaplus.backend"
 })
 public class BackendServerApp {
 

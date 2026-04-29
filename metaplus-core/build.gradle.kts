@@ -15,7 +15,7 @@ configurations {
 
 
 dependencies {
-    implementation("org.sjf4j:sjf4j:${Versions.sjf4j}")
+    implementation("org.sjf4j:sjf4j:${Versions.sjf4j}") { isChanging = true }
     implementation("org.slf4j:slf4j-api:${Versions.slf4j}")
     implementation("jakarta.validation:jakarta.validation-api:${Versions.jakartaValidation}")
 

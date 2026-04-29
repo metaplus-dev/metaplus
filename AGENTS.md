@@ -39,7 +39,7 @@ When changing Metaplus, contributors should follow these rules:
 2. Keep `meta` aligned with authoritative sources.
 3. Keep `plus` extensible, but separate from source truth.
 4. Prefer small, additive, explainable changes.
-5. Avoid over-abstracting methods; if logic is simple and only used locally, keep it inline instead of extracting helper methods prematurely.
+5. Avoid over-abstracting methods; if logic is simple and only used locally, keep it inline instead of extracting helper methods prematurely. In particular, do not extract trivial one-line helpers for local string assembly, exception wrapping, or one-off value conversion unless they carry real reusable domain meaning.
 6. Do not introduce undocumented fields or silent contract changes.
 7. Read existing docs and tests before implementation; if they do not exist, state that clearly.
 8. Maintain branch coverage at **70% or higher**.

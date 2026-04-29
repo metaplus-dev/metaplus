@@ -3,8 +3,8 @@ package dev.metaplus.backend.server.dao;
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
 import dev.metaplus.backend.server.BackendServerException;
+import lombok.RequiredArgsConstructor;
 import org.sjf4j.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -12,10 +12,10 @@ import java.net.URI;
 
 
 @Component
+@RequiredArgsConstructor
 public class IndexDao {
 
-    @Autowired
-    private EsClient esClient;
+    private final EsClient esClient;
 
     public boolean existIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
@@ -86,7 +86,7 @@ public class IndexDao {
     }
 
     private BackendServerException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new BackendServerException("IndexDao." + operation + " failed: target=" + target +
+        return new BackendServerException("IndexDao." + operation + " failed for " + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 

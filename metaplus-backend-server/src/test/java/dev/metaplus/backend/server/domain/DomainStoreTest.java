@@ -111,7 +111,7 @@ class DomainStoreTest {
                 )
         );
 
-        JsonObject pureStorage = DomainStore.toPureStorage(mergedStorage);
+        JsonObject pureStorage = StorageUtil.pureStorage(mergedStorage);
 
         assertNull(pureStorage.getString("$kind"));
         assertNull(pureStorage.getJsonObject("settings").getString("$comment"));

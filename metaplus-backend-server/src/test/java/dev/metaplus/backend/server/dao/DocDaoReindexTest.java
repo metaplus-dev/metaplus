@@ -10,7 +10,6 @@ import dev.metaplus.core.model.patch.PatchOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -46,10 +45,7 @@ class DocDaoReindexTest {
         when(indexDao.existIndex(anyString())).thenReturn(true);
         doNothing().when(indexDao).createIndex(anyString(), any(JsonObject.class));
 
-        docDao = new DocDao();
-        ReflectionTestUtils.setField(docDao, "esClient", esClient);
-        ReflectionTestUtils.setField(docDao, "valuesStore", valuesStore);
-        ReflectionTestUtils.setField(docDao, "indexDao", indexDao);
+        docDao = new DocDao(esClient, valuesStore, indexDao);
     }
 
     @Test
@@ -75,7 +71,7 @@ class DocDaoReindexTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindex(oldFqmn, _doc(newFqmn), "ctx._source.x = 1;", null));
 
-        assertTrue(ex.getMessage().contains("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=3, status=500"));
+        assertTrue(ex.getMessage().contains("DocDao.reindex failed for fqmn=old:mysql:main:t1, step=3, status=500"));
         verify(esClient, never()).delete(any(URI.class));
     }
 
@@ -87,7 +83,7 @@ class DocDaoReindexTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindex("old:mysql:main:t1", _doc("new:mysql:main:t1"), "ctx._source.x = 1;", patchOptions));
 
-        assertEquals("DocDao.reindex failed: target=patchOptions, reason=executionMode=ASYNC is not supported", ex.getMessage());
+        assertEquals("DocDao.reindex failed for patchOptions: executionMode=ASYNC is not supported", ex.getMessage());
         verify(esClient, never()).post(any(URI.class), any(JsonObject.class));
     }
 
@@ -131,7 +127,7 @@ class DocDaoReindexTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindex(fqmn, _doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
 
-        assertEquals("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=2, reason=transformed fqmn is unchanged", ex.getMessage());
+        assertEquals("DocDao.reindex failed for fqmn=old:mysql:main:t1, step=2: transformed fqmn is unchanged", ex.getMessage());
         verify(esClient, never()).delete(any(URI.class));
     }
 
@@ -147,7 +143,7 @@ class DocDaoReindexTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindex(fqmn, _doc("new:mysql:main:t1"), "ctx._source.x = 1;", null));
 
-        assertEquals("DocDao.reindex failed: target=fqmn=old:mysql:main:t1, step=2, reason=transformed domain does not match target doc domain", ex.getMessage());
+        assertEquals("DocDao.reindex failed for fqmn=old:mysql:main:t1, step=2: transformed domain does not match target doc domain", ex.getMessage());
         verify(esClient, never()).delete(any(URI.class));
     }
 

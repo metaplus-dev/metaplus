@@ -43,7 +43,7 @@ class SampleStoreTest {
 
         BackendException ex = assertThrows(BackendException.class, sampleStore::refresh);
 
-        assertEquals("SampleStore.refresh failed: target=index=i_metaplus_sample, status=500, body=J{error=boom}",
+        assertEquals("SampleStore.refresh failed for index=i_metaplus_sample, status=500, body=J{error=boom}",
                 ex.getMessage());
     }
 

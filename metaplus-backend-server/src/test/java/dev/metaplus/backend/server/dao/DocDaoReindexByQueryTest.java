@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -46,10 +45,7 @@ class DocDaoReindexByQueryTest {
         doNothing().when(indexDao).createIndex(anyString(), any(JsonObject.class));
         doNothing().when(indexDao).deleteIndex(anyString());
 
-        docDao = new DocDao();
-        ReflectionTestUtils.setField(docDao, "esClient", esClient);
-        ReflectionTestUtils.setField(docDao, "valuesStore", valuesStore);
-        ReflectionTestUtils.setField(docDao, "indexDao", indexDao);
+        docDao = new DocDao(esClient, valuesStore, indexDao);
     }
 
     @Test
@@ -169,7 +165,7 @@ class DocDaoReindexByQueryTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindexByQuery("demo", new Query(), script, new LinkedHashMap<>(), patchOptions));
 
-        assertEquals("DocDao.reindexByQuery failed: target=patchOptions, reason=executionMode=ASYNC is not supported", ex.getMessage());
+        assertEquals("DocDao.reindexByQuery failed for patchOptions: executionMode=ASYNC is not supported", ex.getMessage());
     }
 
     @Test
@@ -209,7 +205,7 @@ class DocDaoReindexByQueryTest {
         MetaplusException ex = assertThrows(MetaplusException.class,
                 () -> docDao.reindexByQuery("demo", new Query(), script, new LinkedHashMap<>(), null));
 
-        assertEquals("DocDao.reindexByQuery failed: target=domain=demo, step=2, reason=cross-domain move is not supported for demo:mysql:main:n0", ex.getMessage());
+        assertEquals("DocDao.reindexByQuery failed for domain=demo, step=2: cross-domain move is not supported for demo:mysql:main:n0", ex.getMessage());
     }
 
     private static EsResponse _success(JsonObject body) {

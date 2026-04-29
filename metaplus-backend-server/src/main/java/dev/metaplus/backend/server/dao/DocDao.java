@@ -16,10 +16,10 @@ import dev.metaplus.core.model.search.SearchRequest;
 import dev.metaplus.core.model.search.SearchResponse;
 import dev.metaplus.core.util.IdGenerator;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sjf4j.JsonArray;
 import org.sjf4j.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,18 +31,21 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class DocDao {
 
-    @Autowired
-    private EsClient esClient;
-    @Autowired
-    private ValuesStore valuesStore;
-    @Autowired
-    private IndexDao indexDao;
+    private final EsClient esClient;
+    private final ValuesStore valuesStore;
+    private final IndexDao indexDao;
     
 
+    /**
+     * Create or update a document by fqmn.
+     * <p>
+     * This uses scripted upsert, so the document is created when absent and updated when present.
+     */
     public Result upsert(@NonNull MetaplusDoc doc, String source, PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(doc.getIdeaDomain());
+        String index = StorageUtil.storageIndex(doc.getIdeaDomain());
         String fqmn = doc.getIdeaFqmn();
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}");
         _applySingleDocWriteOptions(builder, patchOptions);
@@ -56,7 +59,63 @@ public class DocDao {
 
         EsResponse response = esClient.post(uri, body);
         if (!response.isSuccess()) {
-            throw new BackendServerException(_buildEsFailureMessage("upsert", _targetFqmn(fqmn), response));
+            throw new BackendServerException("DocDao.upsert failed for fqmn=" + fqmn
+                    + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
+        }
+        return response.getOpResult();
+    }
+
+    /**
+     * Create a document only when it does not already exist.
+     * <p>
+     * This still runs the composed script, but the script exits with noop when the target document already exists.
+     */
+    public Result create(@NonNull MetaplusDoc doc, String source, PatchOptions patchOptions) {
+        String index = StorageUtil.storageIndex(doc.getIdeaDomain());
+        String fqmn = doc.getIdeaFqmn();
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}");
+        _applySingleDocWriteOptions(builder, patchOptions);
+        URI uri = builder.build(index, fqmn);
+
+        JsonObject body = JsonObject.of(
+                "scripted_upsert", true,
+                "upsert", JsonObject.of(),
+                "script", JsonObject.of(
+                        "source", "if (ctx.op != 'create') { ctx.op = 'none'; return; }"
+                                + valuesStore.composeScript(doc.getIdeaDomain(), source),
+                        "params", doc));
+
+        EsResponse response = esClient.post(uri, body);
+        if (!response.isSuccess()) {
+            throw new BackendServerException("DocDao.create failed for fqmn=" + fqmn
+                    + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
+        }
+        return response.getOpResult();
+    }
+
+    /**
+     * Update an existing document only.
+     * <p>
+     * This runs the composed script without upsert, so Elasticsearch fails when the target document does not exist.
+     */
+    public Result update(@NonNull MetaplusDoc doc, String source, PatchOptions patchOptions) {
+        String index = StorageUtil.storageIndex(doc.getIdeaDomain());
+        String fqmn = doc.getIdeaFqmn();
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}");
+        _applySingleDocWriteOptions(builder, patchOptions);
+        URI uri = builder.build(index, fqmn);
+
+        JsonObject body = JsonObject.of(
+                "script", JsonObject.of(
+                        "source", valuesStore.composeScript(doc.getIdeaDomain(), source),
+                        "params", doc));
+
+        EsResponse response = esClient.post(uri, body);
+        if (!response.isSuccess()) {
+            throw new BackendServerException("DocDao.update failed: target=fqmn=" + fqmn
+                    + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
         }
         return response.getOpResult();
     }
@@ -64,7 +123,7 @@ public class DocDao {
 
     public Result script(@NonNull String fqmn, @NonNull Script script, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
-        String index = StorageUtil.getDomainIndex(idea.getDomain());
+        String index = StorageUtil.storageIndex(idea.getDomain());
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_update/{fqmn}");
         _applySingleDocWriteOptions(builder, patchOptions);
@@ -74,7 +133,7 @@ public class DocDao {
 
         EsResponse response = esClient.post(uri, JsonObject.of("script", fixedScript));
         if (!response.isSuccess()) {
-            throw _failureWithEsResponse("script", _targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("script", "fqmn=" + fqmn, response);
         }
         return response.getOpResult();
     }
@@ -102,7 +161,7 @@ public class DocDao {
     public Result reindex(@NonNull String fqmn, @NonNull MetaplusDoc doc, String source,
                           PatchOptions patchOptions) {
         Idea oldIdea = Idea.of(fqmn);
-        String sourceIndex = StorageUtil.getDomainIndex(oldIdea.getDomain());
+        String sourceIndex = StorageUtil.storageIndex(oldIdea.getDomain());
         String targetDomain = doc.getIdeaDomain();
         _validateReindexOptions(patchOptions, "reindex");
         _validateSyncExecutionModeForReindex(patchOptions, "reindex");
@@ -125,24 +184,24 @@ public class DocDao {
 
         EsResponse response = esClient.post(uri1, body1);
         if (!response.isSuccess()) {
-            throw _failureWithStepAndEsResponse("reindex", _targetFqmn(fqmn), "1", response);
+            throw _failureWithStepAndEsResponse("reindex", "fqmn=" + fqmn, "1", response);
         }
         if (response.getOpResult().getTotal() == 0) {
-            throw _failureWithStepAndReason("reindex", _targetFqmn(fqmn), "1", "source document not found");
+            throw _failureWithStepAndReason("reindex", "fqmn=" + fqmn, "1", "source document not found");
         }
 
         // Step 2 resolve transformed fqmn/domain from tmp doc
-        String transformedFqmn = _readTmpDocFqmn(INDEX_REINDEX_TMP_0, fqmn, "reindex", _targetFqmn(fqmn), "2");
+        String transformedFqmn = _readTmpDocFqmn(INDEX_REINDEX_TMP_0, fqmn, "reindex", "fqmn=" + fqmn, "2");
         if (fqmn.equals(transformedFqmn)) {
-            throw _failureWithStepAndReason("reindex", _targetFqmn(fqmn), "2",
+            throw _failureWithStepAndReason("reindex", "fqmn=" + fqmn, "2",
                     "transformed fqmn is unchanged");
         }
         String transformedDomain = Idea.of(transformedFqmn).getDomain();
         if (!targetDomain.equals(transformedDomain)) {
-            throw _failureWithStepAndReason("reindex", _targetFqmn(fqmn), "2",
+            throw _failureWithStepAndReason("reindex", "fqmn=" + fqmn, "2",
                     "transformed domain does not match target doc domain");
         }
-        String destinationIndex = StorageUtil.getDomainIndex(transformedDomain);
+        String destinationIndex = StorageUtil.storageIndex(transformedDomain);
 
         // Step 3 reindex back
         UriComponentsBuilder builder3 = UriComponentsBuilder.fromPath("/_reindex");
@@ -160,13 +219,13 @@ public class DocDao {
 
         EsResponse response2 = esClient.post(uri3, body2);
         if (!response2.isSuccess()) {
-            throw _failureWithStepAndEsResponse("reindex", _targetFqmn(fqmn), "3", response2);
+            throw _failureWithStepAndEsResponse("reindex", "fqmn=" + fqmn, "3", response2);
         }
 
         // Step 4 delete old doc only after successful reindex-back
         EsResponse deleteResponse = _deleteRaw(fqmn, _toSingleDocWriteOptions(patchOptions));
         if (!deleteResponse.isSuccess()) {
-            throw _failureWithStepAndEsResponse("reindex", _targetFqmn(fqmn), "4", deleteResponse);
+            throw _failureWithStepAndEsResponse("reindex", "fqmn=" + fqmn, "4", deleteResponse);
         }
 
         return response2.getOpResult();
@@ -176,7 +235,7 @@ public class DocDao {
     public Result delete(@NonNull String fqmn, PatchOptions patchOptions) {
         EsResponse response = _deleteRaw(fqmn, patchOptions);
         if (!response.isSuccess()) {
-            throw _failureWithEsResponse("delete", _targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("delete", "fqmn=" + fqmn, response);
         }
         return response.getOpResult();
     }
@@ -184,7 +243,7 @@ public class DocDao {
 
     public MetaplusDoc read(@NonNull String fqmn, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
-        String index = StorageUtil.getDomainIndex(idea.getDomain());
+        String index = StorageUtil.storageIndex(idea.getDomain());
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_doc/{fqmn}");
         _applySingleDocReadOptions(builder, patchOptions);
@@ -196,13 +255,13 @@ public class DocDao {
         } else if (response.isNotFound()) {
             return null;
         } else {
-            throw _failureWithEsResponse("read", _targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("read", "fqmn=" + fqmn, response);
         }
     }
 
     public boolean exist(@NonNull String fqmn, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
-        String index = StorageUtil.getDomainIndex(idea.getDomain());
+        String index = StorageUtil.storageIndex(idea.getDomain());
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_doc/{fqmn}");
         _applySingleDocReadOptions(builder, patchOptions);
@@ -214,7 +273,7 @@ public class DocDao {
         } else if (response.isNotFound()) {
             return false;
         } else {
-            throw _failureWithEsResponse("exist", _targetFqmn(fqmn), response);
+            throw _failureWithEsResponse("exist", "fqmn=" + fqmn, response);
         }
     }
 
@@ -225,7 +284,7 @@ public class DocDao {
 
         EsResponse response = _operateByQuery("_update_by_query", domainName, query, fixedScript, patchOptions);
         if (!response.isSuccess()) {
-            throw _failureWithEsResponse("updateByQuery", _targetDomain(domainName), response);
+            throw _failureWithEsResponse("updateByQuery", "domain=" + domainName, response);
         }
         return response.getOpResult();
     }
@@ -235,7 +294,7 @@ public class DocDao {
                                 PatchOptions patchOptions) {
         EsResponse response = _operateByQuery("_delete_by_query", domainName, query, null, patchOptions);
         if (!response.isSuccess()) {
-            throw _failureWithEsResponse("deleteByQuery", _targetDomain(domainName), response);
+            throw _failureWithEsResponse("deleteByQuery", "domain=" + domainName, response);
         }
         return response.getOpResult();
     }
@@ -243,7 +302,7 @@ public class DocDao {
 
     private EsResponse _operateByQuery(@NonNull String operate, @NonNull String domainName, @NonNull Query query,
                                        Script script, PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(domainName);
+        String index = StorageUtil.storageIndex(domainName);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/{operate}");
         _applyByQueryOptions(builder, patchOptions, operate);
@@ -256,7 +315,7 @@ public class DocDao {
 
     public Result reindexByQuery(@NonNull String domainName, @NonNull Query query, @NonNull Script script,
                                  Map<String, String> fqmnMapping, PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(domainName);
+        String index = StorageUtil.storageIndex(domainName);
         _validateReindexOptions(patchOptions, "reindexByQuery");
         _validateSyncExecutionModeForReindex(patchOptions, "reindexByQuery");
 
@@ -279,11 +338,11 @@ public class DocDao {
 
             EsResponse response1 = esClient.post(uri1, body1);
             if (!response1.isSuccess()) {
-                throw _failureWithStepAndEsResponse("reindexByQuery", _targetDomain(domainName), "1", response1);
+                throw _failureWithStepAndEsResponse("reindexByQuery", "domain=" + domainName, "1", response1);
             }
             Result result1 = response1.getOpResult();
             if (result1.getCreated() == 0) {
-                log.warn("DocDao.reindexByQuery skipped: target={}, step=1, reason=empty query", _targetDomain(domainName));
+                log.warn("DocDao.reindexByQuery skipped for domain={}, step=1: empty query", domainName);
                 return result1;
             }
 
@@ -302,7 +361,7 @@ public class DocDao {
 
             EsResponse response3 = esClient.post(uri3, body3);
             if (!response3.isSuccess()) {
-                throw _failureWithStepAndEsResponse("reindexByQuery", _targetDomain(domainName), "3", response3);
+                throw _failureWithStepAndEsResponse("reindexByQuery", "domain=" + domainName, "3", response3);
             }
 
             // Step 4 delete old docs by captured ids
@@ -321,20 +380,20 @@ public class DocDao {
     /// by domain
 
     public void refresh(String domain, PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(domain);
+        String index = StorageUtil.storageIndex(domain);
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_refresh");
         _applyDomainRefreshOptions(builder, patchOptions);
         URI uri = builder.build(index);
 
         EsResponse response = esClient.post(uri);
         if (!response.isSuccess()) {
-            throw _failureWithEsResponse("refresh", _targetDomain(domain), response);
+            throw _failureWithEsResponse("refresh", "domain=" + domain, response);
         }
     }
 
     public SearchResponse<MetaplusDoc> readByDomain(@NonNull String domain, int size, JsonArray sort,
                                                     PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(domain);
+        String index = StorageUtil.storageIndex(domain);
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_search");
         _applyDomainReadCountOptions(builder, patchOptions);
         URI uri = builder
@@ -351,12 +410,12 @@ public class DocDao {
         if (response.isSuccess()) {
             return response.getBodyAsSearchResponse(MetaplusDoc.class);
         } else {
-            throw _failureWithEsResponse("readByDomain", _targetDomain(domain), response);
+            throw _failureWithEsResponse("readByDomain", "domain=" + domain, response);
         }
     }
 
     public int countByDomain(String domain, PatchOptions patchOptions) {
-        String index = StorageUtil.getDomainIndex(domain);
+        String index = StorageUtil.storageIndex(domain);
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_count");
         _applyDomainReadCountOptions(builder, patchOptions);
         URI uri = builder.build(index);
@@ -365,7 +424,7 @@ public class DocDao {
         if (response.isSuccess()) {
             return response.getBody().getInt("count");
         } else {
-            throw _failureWithEsResponse("countByDomain", _targetDomain(domain), response);
+            throw _failureWithEsResponse("countByDomain", "domain=" + domain, response);
         }
     }
 
@@ -422,8 +481,8 @@ public class DocDao {
             }
 
             EsResponse response = esClient.post(uri, reqBody);
-            if (!response.isSuccess()) {
-                throw _failureWithStepAndEsResponse("reindexByQuery", _targetDomain(domainName), "2", response);
+        if (!response.isSuccess()) {
+                throw _failureWithStepAndEsResponse("reindexByQuery", "domain=" + domainName, "2", response);
             }
 
             JsonArray hits = response.getBody().getJsonObject("hits").getJsonArray("hits");
@@ -436,11 +495,11 @@ public class DocDao {
                 String oldFqmn = hit.getString("_id");
                 String newFqmn = hit.getStringByPath("$._source.idea.fqmn");
                 if (oldFqmn.equals(newFqmn)) {
-                    throw _failureWithStepAndReason("reindexByQuery", _targetDomain(domainName), "2",
+                    throw _failureWithStepAndReason("reindexByQuery", "domain=" + domainName, "2",
                             "transformed fqmn is unchanged for " + oldFqmn);
                 }
                 if (!domainName.equals(Idea.of(newFqmn).getDomain())) {
-                    throw _failureWithStepAndReason("reindexByQuery", _targetDomain(domainName), "2",
+                    throw _failureWithStepAndReason("reindexByQuery", "domain=" + domainName, "2",
                             "cross-domain move is not supported for " + oldFqmn);
                 }
                 fqmnMapping.put(oldFqmn, newFqmn);
@@ -453,7 +512,7 @@ public class DocDao {
                 if (hits.size() < REINDEX_BY_QUERY_BATCH_SIZE) {
                     break;
                 }
-                throw _failureWithStepAndReason("reindexByQuery", _targetDomain(domainName), "2",
+                throw _failureWithStepAndReason("reindexByQuery", "domain=" + domainName, "2",
                         "missing sort in hits for pagination");
             }
         }
@@ -480,7 +539,7 @@ public class DocDao {
 
     private EsResponse _deleteRaw(String fqmn, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
-        String index = StorageUtil.getDomainIndex(idea.getDomain());
+        String index = StorageUtil.storageIndex(idea.getDomain());
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_doc/{fqmn}");
         _applySingleDocWriteOptions(builder, patchOptions);
@@ -494,7 +553,10 @@ public class DocDao {
         if (patchOptions == null) {
             return;
         }
-        _applyCommonWriteOptions(builder, patchOptions);
+        _applyRefresh(builder, patchOptions.getRefresh());
+        if (patchOptions.getRouteKey() != null) {
+            builder.queryParam("routing", patchOptions.getRouteKey());
+        }
     }
 
     private void _applySingleDocReadOptions(UriComponentsBuilder builder, PatchOptions patchOptions) {
@@ -519,7 +581,9 @@ public class DocDao {
             return;
         }
         _applyRefresh(builder, patchOptions.getRefresh());
-        _applyRouteKey(builder, patchOptions);
+        if (patchOptions.getRouteKey() != null) {
+            builder.queryParam("routing", patchOptions.getRouteKey());
+        }
         _applyExecutionMode(builder, patchOptions.getExecutionMode());
     }
 
@@ -529,7 +593,9 @@ public class DocDao {
             return;
         }
         _applyRefresh(builder, patchOptions.getRefresh());
-        _applyRouteKey(builder, patchOptions);
+        if (patchOptions.getRouteKey() != null) {
+            builder.queryParam("routing", patchOptions.getRouteKey());
+        }
         _applyExecutionMode(builder, patchOptions.getExecutionMode());
     }
 
@@ -539,17 +605,14 @@ public class DocDao {
         if (patchOptions == null) {
             return;
         }
-        _applyRouteKey(builder, patchOptions);
+        if (patchOptions.getRouteKey() != null) {
+            builder.queryParam("routing", patchOptions.getRouteKey());
+        }
     }
 
     private void _applyDomainRefreshOptions(UriComponentsBuilder builder, PatchOptions patchOptions) {
         _validateSupportedOptions(patchOptions, "domainRefresh",
                 false, false, false, false);
-    }
-
-    private void _applyCommonWriteOptions(UriComponentsBuilder builder, PatchOptions patchOptions) {
-        _applyRefresh(builder, patchOptions.getRefresh());
-        _applyRouteKey(builder, patchOptions);
     }
 
     private void _validateReindexOptions(PatchOptions patchOptions, String operationName) {
@@ -605,48 +668,25 @@ public class DocDao {
         return transformedFqmn;
     }
 
-    private String _targetFqmn(String fqmn) {
-        return "fqmn=" + fqmn;
-    }
-
-    private String _targetDomain(String domain) {
-        return "domain=" + domain;
-    }
-
     private MetaplusException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new MetaplusException(_buildEsFailureMessage(operation, target, response));
+        return new MetaplusException("DocDao." + operation + " failed for " + target
+                + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
     private MetaplusException _failureWithStepAndEsResponse(String operation, String target,
-                                                           String step, EsResponse response) {
-        return new MetaplusException(_buildStepEsFailureMessage(operation, target, step, response));
+                                                            String step, EsResponse response) {
+        return new MetaplusException("DocDao." + operation + " failed for " + target
+                + ", step=" + step + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
     private MetaplusException _failureWithReason(String operation, String target, String reason) {
-        return new MetaplusException(_buildReasonFailureMessage(operation, target, reason));
+        return new MetaplusException("DocDao." + operation + " failed for " + target + ": " + reason);
     }
 
     private MetaplusException _failureWithStepAndReason(String operation, String target,
-                                                       String step, String reason) {
-        return new MetaplusException(_buildStepReasonFailureMessage(operation, target, step, reason));
-    }
-
-    private String _buildEsFailureMessage(String operation, String target, EsResponse response) {
-        return "DocDao." + operation + " failed: target=" + target +
-                ", status=" + response.getStatusCode() + ", body=" + response.getBody();
-    }
-
-    private String _buildStepEsFailureMessage(String operation, String target, String step, EsResponse response) {
-        return "DocDao." + operation + " failed: target=" + target +
-                ", step=" + step + ", status=" + response.getStatusCode() + ", body=" + response.getBody();
-    }
-
-    private String _buildReasonFailureMessage(String operation, String target, String reason) {
-        return "DocDao." + operation + " failed: target=" + target + ", reason=" + reason;
-    }
-
-    private String _buildStepReasonFailureMessage(String operation, String target, String step, String reason) {
-        return "DocDao." + operation + " failed: target=" + target + ", step=" + step + ", reason=" + reason;
+                                                        String step, String reason) {
+        return new MetaplusException("DocDao." + operation + " failed for " + target
+                + ", step=" + step + ": " + reason);
     }
 
     private PatchOptions _toSingleDocWriteOptions(PatchOptions patchOptions) {
@@ -668,12 +708,6 @@ public class DocDao {
         copied.setRouteKey(patchOptions.getRouteKey());
         copied.setExecutionMode(patchOptions.getExecutionMode());
         return copied;
-    }
-
-    private void _applyRouteKey(UriComponentsBuilder builder, PatchOptions patchOptions) {
-        if (patchOptions.getRouteKey() != null) {
-            builder.queryParam("routing", patchOptions.getRouteKey());
-        }
     }
 
     private void _applyRefresh(UriComponentsBuilder builder, PatchOptions.RefreshMode refreshMode) {

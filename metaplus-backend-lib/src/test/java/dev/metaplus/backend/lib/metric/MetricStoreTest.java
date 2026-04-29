@@ -43,7 +43,7 @@ class MetricStoreTest {
 
         BackendException ex = assertThrows(BackendException.class, metricStore::refresh);
 
-        assertEquals("MetricStore.refresh failed: target=index=i_metric_test, status=500, body=J{error=boom}",
+        assertEquals("MetricStore.refresh failed for index=i_metric_test, status=500, body=J{error=boom}",
                 ex.getMessage());
     }
 
@@ -61,7 +61,7 @@ class MetricStoreTest {
 
         BackendException ex = assertThrows(BackendException.class, () -> metricStore.get(query));
 
-        assertEquals("MetricStore.get failed: target=metricName=rows, assetName=orders, period=PT1M, startedAtStart=2026-04-27T00:00:00Z, startedAtEnd=null, from=0, size=1000, status=500, body=J{error=bad_metric}",
+        assertEquals("MetricStore.get failed for metricName=rows, assetName=orders, period=PT1M, startedAtStart=2026-04-27T00:00:00Z, startedAtEnd=null, from=0, size=1000, status=500, body=J{error=bad_metric}",
                 ex.getMessage());
     }
 

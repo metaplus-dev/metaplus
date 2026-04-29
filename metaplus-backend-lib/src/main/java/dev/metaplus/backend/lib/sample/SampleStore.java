@@ -204,7 +204,7 @@ public class SampleStore {
     }
 
     private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new BackendException("SampleStore." + operation + " failed: target=" + target +
+        return new BackendException("SampleStore." + operation + " failed for " + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 

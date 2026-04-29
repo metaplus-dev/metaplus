@@ -39,11 +39,12 @@ public class PatchRequest extends JsonObject {
     private PatchMethod method;
     private String domain;
     private String fqmn;
-    private Instant patchedAt;
-    private String patchedBy;
 
-    private MetaplusDoc doc;
     private Query query;
     private Script script;
+    private MetaplusDoc doc;
+
+    private Instant patchedAt;
+    private String patchedBy;
 
 }

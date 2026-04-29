@@ -43,7 +43,7 @@ class DistributedLockTest {
         BackendException ex = assertThrows(BackendException.class,
                 () -> lock.lock("job-a", 30, "worker-1"));
 
-        assertEquals("DistributedLock.lock failed: target=lockId=job-a, status=500, body=J{error=boom}",
+        assertEquals("DistributedLock.lock failed for lockId=job-a, status=500, body=J{error=boom}",
                 ex.getMessage());
     }
 
@@ -57,7 +57,7 @@ class DistributedLockTest {
         BackendException ex = assertThrows(BackendException.class,
                 () -> lock.lock("job-a", 30, "worker-1"));
 
-        assertEquals("DistributedLock.lock failed: target=lockId=job-a, reason=missing expiredAt",
+        assertEquals("DistributedLock.lock failed for lockId=job-a: missing expiredAt",
                 ex.getMessage());
     }
 

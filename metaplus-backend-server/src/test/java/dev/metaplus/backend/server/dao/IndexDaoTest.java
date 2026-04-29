@@ -6,7 +6,6 @@ import dev.metaplus.backend.server.BackendServerException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URI;
 
@@ -24,8 +23,7 @@ class IndexDaoTest {
     @BeforeEach
     void setUp() {
         esClient = mock(EsClient.class);
-        indexDao = new IndexDao();
-        ReflectionTestUtils.setField(indexDao, "esClient", esClient);
+        indexDao = new IndexDao(esClient);
     }
 
     @Test
@@ -36,7 +34,7 @@ class IndexDaoTest {
         BackendServerException ex = assertThrows(BackendServerException.class,
                 () -> indexDao.createIndex("i_demo", JsonObject.of()));
 
-        assertEquals("IndexDao.createIndex failed: target=index=i_demo, status=500, body=J{error=boom}",
+        assertEquals("IndexDao.createIndex failed for index=i_demo, status=500, body=J{error=boom}",
                 ex.getMessage());
     }
 
@@ -48,7 +46,7 @@ class IndexDaoTest {
         BackendServerException ex = assertThrows(BackendServerException.class,
                 () -> indexDao.existIndex("_bad"));
 
-        assertEquals("IndexDao.existIndex failed: target=index=_bad, status=400, body=J{error=bad_request}",
+        assertEquals("IndexDao.existIndex failed for index=_bad, status=400, body=J{error=bad_request}",
                 ex.getMessage());
     }
 }

@@ -155,7 +155,7 @@ public class DistributedLock {
     }
 
     private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new BackendException("DistributedLock." + operation + " failed: target=" + target
+        return new BackendException("DistributedLock." + operation + " failed for " + target
                 + ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
@@ -164,7 +164,7 @@ public class DistributedLock {
     }
 
     private String _buildReasonFailureMessage(String operation, String target, String reason) {
-        return "DistributedLock." + operation + " failed: target=" + target + ", reason=" + reason;
+        return "DistributedLock." + operation + " failed for " + target + ": " + reason;
     }
 
 

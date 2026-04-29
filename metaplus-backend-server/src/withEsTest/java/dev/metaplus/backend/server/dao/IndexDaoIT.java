@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +25,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
 
     @BeforeEach
     void setUpDao() {
-        indexDao = new IndexDao();
-        ReflectionTestUtils.setField(indexDao, "esClient", esClient);
+        indexDao = new IndexDao(esClient);
     }
 
     @AfterEach

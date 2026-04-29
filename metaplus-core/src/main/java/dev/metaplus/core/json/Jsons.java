@@ -36,6 +36,10 @@ public class Jsons {
         return SJF4J.toJsonBytes(node);
     }
 
+    public static <T> T fromNode(Object node, Class<T> clazz) {
+        return SJF4J.fromNode(node, clazz);
+    }
+
     /// Path
 
     private static final Map<String, JsonPath> PATH_CACHE = new IdentityHashMap<>();

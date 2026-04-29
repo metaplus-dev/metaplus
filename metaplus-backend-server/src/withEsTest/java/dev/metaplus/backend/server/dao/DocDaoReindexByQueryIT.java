@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,17 +29,13 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
 
     @BeforeEach
     void setUpDao() {
-        indexDao = new IndexDao();
-        ReflectionTestUtils.setField(indexDao, "esClient", esClient);
+        indexDao = new IndexDao(esClient);
 
         ValuesStore valuesStore = mock(ValuesStore.class);
         when(valuesStore.composeScript(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(1));
 
-        docDao = new DocDao();
-        ReflectionTestUtils.setField(docDao, "esClient", esClient);
-        ReflectionTestUtils.setField(docDao, "valuesStore", valuesStore);
-        ReflectionTestUtils.setField(docDao, "indexDao", indexDao);
+        docDao = new DocDao(esClient, valuesStore, indexDao);
     }
 
     @AfterEach
@@ -53,7 +48,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
     @Test
     void reindexByQueryPagesAllDocsAndKeepsReindexedDocs() {
         String domain = "docdao_reindex_batch";
-        indexName = StorageUtil.getDomainIndex(domain);
+        indexName = StorageUtil.storageIndex(domain);
         _createDomainIndex(indexName);
 
         int totalDocs = 1005;
@@ -88,7 +83,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
     @Test
     void reindexByQueryDeletesOnlyCapturedOriginalIds() {
         String domain = "docdao_reindex_delete";
-        indexName = StorageUtil.getDomainIndex(domain);
+        indexName = StorageUtil.storageIndex(domain);
         _createDomainIndex(indexName);
 
         String oldA = _fqmn(domain, "a");

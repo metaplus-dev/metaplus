@@ -171,7 +171,7 @@ public class RuntimeStateStore {
     }
 
     private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new BackendException("RuntimeStateStore." + operation + " failed: target=" + target +
+        return new BackendException("RuntimeStateStore." + operation + " failed for " + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 

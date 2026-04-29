@@ -48,10 +48,6 @@ public class DomainStore {
         return domainDoc;
     }
 
-    public boolean existDomainInCache(String domainName) {
-        return DOMAIN_DOMAIN.equals(domainName) || null != domainCache.get(domainName);
-    }
-
     public boolean existDomain(String domainName) {
         return DOMAIN_DOMAIN.equals(domainName) || null != getDomainDoc(domainName);
     }
@@ -76,7 +72,7 @@ public class DomainStore {
     }
 
     public JsonObject getMergedPureStorage(String domainName) {
-        return toPureStorage(getMergedStorage(domainName));
+        return StorageUtil.pureStorage(getMergedStorage(domainName));
     }
 
     public JsonObject getMergedStorage(String domainName) {
@@ -92,17 +88,6 @@ public class DomainStore {
         return _buildRichStorageRecursively(domainDoc);
     }
 
-
-    public static JsonObject toPureStorage(JsonObject mergedStorage) {
-        JsonObject pureStorage = mergedStorage.deepCopy();
-        pureStorage.walk(Nodes.WalkTarget.CONTAINER, Nodes.WalkOrder.BOTTOM_UP, -1, (ps, node) -> {
-            if (JsonType.of(node).isObject()) {
-                Nodes.removeIfInObject(node, (k, v) -> k.startsWith("$"));
-            }
-            return true;
-        });
-        return pureStorage;
-    }
 
 
     /// private

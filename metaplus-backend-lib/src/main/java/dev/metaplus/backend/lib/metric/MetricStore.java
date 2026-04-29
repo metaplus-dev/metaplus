@@ -187,7 +187,7 @@ public class MetricStore {
     }
 
     private BackendException _failureWithEsResponse(String operation, String target, EsResponse response) {
-        return new BackendException("MetricStore." + operation + " failed: target=" + target +
+        return new BackendException("MetricStore." + operation + " failed for " + target +
                 ", status=" + response.getStatusCode() + ", body=" + response.getBody());
     }
 
