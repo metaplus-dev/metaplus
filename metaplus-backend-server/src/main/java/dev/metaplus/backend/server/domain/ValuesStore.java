@@ -139,6 +139,11 @@ public class ValuesStore {
         domainDerivedScriptCache.clear();
     }
 
+    public void clear() {
+        domainValueExprsCache.clear();
+        domainDerivedScriptCache.clear();
+    }
+
     public Map<String, String> getValueExprs(String domain) {
         return domainValueExprsCache.get(domain);
     }

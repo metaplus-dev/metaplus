@@ -135,7 +135,7 @@ class IndexDaoIT extends EsIntegrationTestSupport {
     void statsIndexReturnsIndexedDocumentCounts() {
         String indexName = _createIndex();
         indexDocument(indexName, "doc-1", JsonObject.of("name", "orders"));
-        refreshIndex(indexName);
+        indexDao.refreshIndex(indexName);
 
         JsonObject stats = indexDao.statsIndex(indexName);
         Object count = stats.getJsonObject("indices")

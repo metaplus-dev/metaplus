@@ -56,6 +56,10 @@ public class DomainStore {
         domainCache.remove(domainName);
     }
 
+    public void clear() {
+        domainCache.clear();
+    }
+
     public Set<String> customDomainSet() {
         Set<String> domains = new HashSet<>();
         domainCache.forEach((domain, domainDoc) -> {

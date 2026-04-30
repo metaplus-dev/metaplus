@@ -47,22 +47,25 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    testImplementation(platform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:elasticsearch")
+    testImplementation(enforcedPlatform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
+    testImplementation("org.testcontainers:testcontainers:${Versions.testcontainers}")
+    testImplementation("org.testcontainers:junit-jupiter:${Versions.testcontainers}")
+    testImplementation("org.testcontainers:elasticsearch:${Versions.testcontainers}")
 
     add(withEsTestSourceSet.implementationConfigurationName,
             platform("org.junit:junit-bom:${Versions.junit}"))
     add(withEsTestSourceSet.implementationConfigurationName,
-            platform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
+            enforcedPlatform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
+    add(withEsTestSourceSet.implementationConfigurationName,
+            "org.testcontainers:testcontainers:${Versions.testcontainers}")
     add(withEsTestSourceSet.implementationConfigurationName,
             "org.junit.jupiter:junit-jupiter")
     add(withEsTestSourceSet.runtimeOnlyConfigurationName,
             "org.junit.platform:junit-platform-launcher")
     add(withEsTestSourceSet.implementationConfigurationName,
-            "org.testcontainers:junit-jupiter")
+            "org.testcontainers:junit-jupiter:${Versions.testcontainers}")
     add(withEsTestSourceSet.implementationConfigurationName,
-            "org.testcontainers:elasticsearch")
+            "org.testcontainers:elasticsearch:${Versions.testcontainers}")
 
 }
 
@@ -90,7 +93,7 @@ tasks.register<Test>("withEsTest") {
             systemProperty(key, value)
         }
     }
-    environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix://${System.getProperty("user.home")}/.docker/run/docker.sock")
+    environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
     useJUnitPlatform()
 }

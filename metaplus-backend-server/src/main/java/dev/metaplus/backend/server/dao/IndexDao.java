@@ -72,6 +72,14 @@ public class IndexDao {
         }
     }
 
+    public void refreshIndex(String index) {
+        URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(index);
+        EsResponse response = esClient.post(uri);
+        if (!response.isSuccess()) {
+            throw _failureWithEsResponse("refreshIndex", _targetIndex(index), response);
+        }
+    }
+
     public JsonObject statsIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_stats/docs,indexing,search").build(index);
         EsResponse response = esClient.get(uri);

@@ -60,7 +60,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
                     "plus", JsonObject.of()
             ));
         }
-        refreshIndex(indexName);
+        indexDao.refreshIndex(indexName);
 
         Script script = new Script();
         script.setSource("ctx._source.idea.fqmn = ctx._source.idea.fqmn + '_new';");
@@ -68,7 +68,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
         Map<String, String> fqmnMapping = new LinkedHashMap<>();
         Result result = docDao.reindexByQuery(domain, new Query(), script, fqmnMapping, null);
 
-        refreshIndex(indexName);
+        indexDao.refreshIndex(indexName);
 
         assertEquals(totalDocs, result.getTotal());
         assertEquals(totalDocs, fqmnMapping.size());
@@ -102,7 +102,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
                 "idea", JsonObject.of("fqmn", untouched, "domain", domain),
                 "meta", JsonObject.of("group", "g2"),
                 "plus", JsonObject.of()));
-        refreshIndex(indexName);
+        indexDao.refreshIndex(indexName);
 
         Query query = new Query();
         query.addBoolFilterTerm("meta.group", "g1");
@@ -112,7 +112,7 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
         Map<String, String> fqmnMapping = new LinkedHashMap<>();
         docDao.reindexByQuery(domain, query, script, fqmnMapping, null);
 
-        refreshIndex(indexName);
+        indexDao.refreshIndex(indexName);
 
         assertEquals(2, fqmnMapping.size());
         assertTrue(docDao.exist(oldA + "_renamed", null));

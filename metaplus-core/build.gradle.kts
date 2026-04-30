@@ -25,6 +25,8 @@ dependencies {
 
     compileOnly("org.projectlombok:lombok:${Versions.lombok}")
     annotationProcessor("org.projectlombok:lombok:${Versions.lombok}")
+    testCompileOnly("org.projectlombok:lombok:${Versions.lombok}")
+    testAnnotationProcessor("org.projectlombok:lombok:${Versions.lombok}")
 
     testImplementation(platform("org.junit:junit-bom:${Versions.junit}"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -35,8 +37,6 @@ dependencies {
     testImplementation("org.springframework:spring-webflux:${Versions.springFrameworkJdk8}")
     testImplementation("org.springframework:spring-test:${Versions.springFrameworkJdk8}")
 
-    testCompileOnly("org.projectlombok:lombok:${Versions.lombok}")
-    testAnnotationProcessor("org.projectlombok:lombok:${Versions.lombok}")
     testImplementation("ch.qos.logback:logback-classic:${Versions.logback}")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}")
 

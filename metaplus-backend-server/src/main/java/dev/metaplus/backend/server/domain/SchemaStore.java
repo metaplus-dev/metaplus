@@ -5,11 +5,13 @@ import dev.metaplus.core.model.DomainDoc;
 import dev.metaplus.core.model.MetaplusDoc;
 import lombok.NonNull;
 import org.sjf4j.JsonObject;
+import org.sjf4j.JsonType;
 import org.sjf4j.schema.JsonSchema;
 import org.sjf4j.schema.ObjectSchema;
 import org.sjf4j.schema.SchemaRegistry;
 import org.sjf4j.schema.ValidationException;
 import org.sjf4j.schema.ValidationResult;
+import org.sjf4j.node.Nodes;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -20,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SchemaStore {
+
+    private static final String CORE_SCHEMA_REF_PREFIX = "https://metaplus.dev/json-schemas/";
 
     private static final String[] CORE_SCHEMA_REFS = {
             "base.json",
@@ -55,6 +59,10 @@ public class SchemaStore {
         domainSchemaCache.remove(domainName);
     }
 
+    public void clear() {
+        domainSchemaCache.clear();
+    }
+
     public void validateDoc(@NonNull MetaplusDoc doc) {
         String domainName = doc.getIdeaDomain();
         if (!StringUtils.hasText(domainName)) {
@@ -74,6 +82,7 @@ public class SchemaStore {
             throw new BackendServerException("SchemaStore.validateDomainSchema failed: target=domain=" + domainName
                     + ", reason=meta.schema must not be null");
         }
+        _validateSchemaRefs(domainName, schemaNode);
         return _compileSchema(schemaNode);
     }
 
@@ -118,5 +127,29 @@ public class SchemaStore {
         }
         schema.compile(schemaRegistry);
         schemaRegistry.register(schema);
+    }
+
+    private void _validateSchemaRefs(String domainName, JsonObject schemaNode) {
+        schemaNode.walk(Nodes.WalkTarget.CONTAINER, Nodes.WalkOrder.TOP_DOWN, -1, (path, node) -> {
+            if (JsonType.of(node).isObject()) {
+                String ref = Nodes.getInObject(node, "$ref", String.class);
+                if (ref != null) {
+                    _validateSchemaRef(domainName, ref);
+                }
+            }
+            return true;
+        });
+    }
+
+    private void _validateSchemaRef(String domainName, String ref) {
+        if (!StringUtils.hasText(ref)) {
+            throw new BackendServerException("SchemaStore.validateDomainSchema failed: target=domain=" + domainName
+                    + ", reason=meta.schema contains blank $ref");
+        }
+        if (ref.startsWith("#") || ref.startsWith(CORE_SCHEMA_REF_PREFIX)) {
+            return;
+        }
+        throw new BackendServerException("SchemaStore.validateDomainSchema failed: target=domain=" + domainName
+                + ", reason=meta.schema contains unsupported $ref '" + ref + "'. Only local fragment refs and built-in core schema refs are supported");
     }
 }

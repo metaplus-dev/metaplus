@@ -34,16 +34,19 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
-    testImplementation(platform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:elasticsearch")
+    testImplementation(enforcedPlatform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
+    testImplementation("org.testcontainers:testcontainers:${Versions.testcontainers}")
+    testImplementation("org.testcontainers:junit-jupiter:${Versions.testcontainers}")
+    testImplementation("org.testcontainers:elasticsearch:${Versions.testcontainers}")
 
     add(withEsTestSourceSet.implementationConfigurationName,
-            platform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
+            enforcedPlatform("org.testcontainers:testcontainers-bom:${Versions.testcontainers}"))
     add(withEsTestSourceSet.implementationConfigurationName,
-            "org.testcontainers:junit-jupiter")
+            "org.testcontainers:testcontainers:${Versions.testcontainers}")
     add(withEsTestSourceSet.implementationConfigurationName,
-            "org.testcontainers:elasticsearch")
+            "org.testcontainers:junit-jupiter:${Versions.testcontainers}")
+    add(withEsTestSourceSet.implementationConfigurationName,
+            "org.testcontainers:elasticsearch:${Versions.testcontainers}")
 }
 
 tasks.test {
@@ -61,8 +64,6 @@ tasks.register<Test>("withEsTest") {
             systemProperty(key, value)
         }
     }
-    environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix://${System.getProperty("user.home")}/.docker/run/docker.sock")
-    environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
     useJUnitPlatform()
 }
 

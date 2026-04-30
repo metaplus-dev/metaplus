@@ -49,4 +49,16 @@ class IndexDaoTest {
         assertEquals("IndexDao.existIndex failed for index=_bad, status=400, body=J{error=bad_request}",
                 ex.getMessage());
     }
+
+    @Test
+    void refreshIndexUsesNormalizedFailureMessage() {
+        when(esClient.post(any(URI.class)))
+                .thenReturn(new EsResponse(500, JsonObject.of("error", "refresh_failed")));
+
+        BackendServerException ex = assertThrows(BackendServerException.class,
+                () -> indexDao.refreshIndex("i_demo"));
+
+        assertEquals("IndexDao.refreshIndex failed for index=i_demo, status=500, body=J{error=refresh_failed}",
+                ex.getMessage());
+    }
 }
