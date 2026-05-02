@@ -13,7 +13,7 @@ public class Jsons {
 
     private static final Sjf4j SJF4J;
     static {
-        SJF4J = Sjf4j.builder().build();
+        SJF4J = Sjf4j.builder().includeNulls(false).build();
     }
 
     public static <T> T fromJson(String json, Class<T> clazz) {

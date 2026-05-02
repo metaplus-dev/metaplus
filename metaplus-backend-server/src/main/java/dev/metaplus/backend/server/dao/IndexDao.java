@@ -17,6 +17,9 @@ public class IndexDao {
 
     private final EsClient esClient;
 
+    /**
+     * Check whether one index exists.
+     */
     public boolean existIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.head(uri);
@@ -29,6 +32,9 @@ public class IndexDao {
         throw _failureWithEsResponse("existIndex", _targetIndex(index), response);
     }
 
+    /**
+     * Create one index from pure storage settings and mappings.
+     */
     public void createIndex(String index, JsonObject pureStorage) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.put(uri, pureStorage);
@@ -37,6 +43,9 @@ public class IndexDao {
         }
     }
 
+    /**
+     * Read raw index metadata.
+     */
     public JsonObject readIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.get(uri);
@@ -46,6 +55,9 @@ public class IndexDao {
         return response.getBody();
     }
 
+    /**
+     * Update index settings.
+     */
     public void updateSettings(String index, JsonObject settings) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_settings")
                 .queryParam("reopen", true).build(index);
@@ -55,6 +67,9 @@ public class IndexDao {
         }
     }
 
+    /**
+     * Update index mappings.
+     */
     public void updateMappings(String index, JsonObject mappings) {
         // why not `_mappings` ?
         URI uri = UriComponentsBuilder.fromPath("/{index}/_mapping").build(index);
@@ -64,6 +79,9 @@ public class IndexDao {
         }
     }
 
+    /**
+     * Delete one index if it exists.
+     */
     public void deleteIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}").build(index);
         EsResponse response = esClient.delete(uri);
@@ -72,6 +90,9 @@ public class IndexDao {
         }
     }
 
+    /**
+     * Refresh one index.
+     */
     public void refreshIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_refresh").build(index);
         EsResponse response = esClient.post(uri);
@@ -80,6 +101,9 @@ public class IndexDao {
         }
     }
 
+    /**
+     * Return selected index stats.
+     */
     public JsonObject statsIndex(String index) {
         URI uri = UriComponentsBuilder.fromPath("/{index}/_stats/docs,indexing,search").build(index);
         EsResponse response = esClient.get(uri);

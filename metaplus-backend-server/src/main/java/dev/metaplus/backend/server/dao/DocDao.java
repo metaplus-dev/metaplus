@@ -4,7 +4,7 @@ import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
 import dev.metaplus.backend.server.BackendServerException;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.exception.MetaplusException;
 import dev.metaplus.core.model.Idea;
 import dev.metaplus.core.model.MetaplusDoc;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class DocDao {
 
     private final EsClient esClient;
-    private final ValuesStore valuesStore;
+    private final ValueStore valueStore;
     private final IndexDao indexDao;
     
 
@@ -54,7 +54,7 @@ public class DocDao {
                 "scripted_upsert", true,
                 "upsert", JsonObject.of(),
                 "script", JsonObject.of(
-                        "source", valuesStore.composeScript(doc.getIdeaDomain(), source),
+                        "source", valueStore.composeScript(doc.getIdeaDomain(), source),
                         "params", doc));
 
         EsResponse response = esClient.post(uri, body);
@@ -83,7 +83,7 @@ public class DocDao {
                 "upsert", JsonObject.of(),
                 "script", JsonObject.of(
                         "source", "if (ctx.op != 'create') { ctx.op = 'none'; return; }"
-                                + valuesStore.composeScript(doc.getIdeaDomain(), source),
+                                + valueStore.composeScript(doc.getIdeaDomain(), source),
                         "params", doc));
 
         EsResponse response = esClient.post(uri, body);
@@ -109,7 +109,7 @@ public class DocDao {
 
         JsonObject body = JsonObject.of(
                 "script", JsonObject.of(
-                        "source", valuesStore.composeScript(doc.getIdeaDomain(), source),
+                        "source", valueStore.composeScript(doc.getIdeaDomain(), source),
                         "params", doc));
 
         EsResponse response = esClient.post(uri, body);
@@ -119,8 +119,9 @@ public class DocDao {
         }
         return response.getOpResult();
     }
-
-
+    /**
+     * Run a script against one document.
+     */
     public Result script(@NonNull String fqmn, @NonNull Script script, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
         String index = StorageUtil.storageIndex(idea.getDomain());
@@ -138,26 +139,12 @@ public class DocDao {
         return response.getOpResult();
     }
 
-
-    //POST _reindex
-    //{
-    //  "source": {
-    //    "index": "source_index",
-    //    "query": {
-    //      "ids": {
-    //        "values": ["1", "2", "3"]
-    //      }
-    //    }
-    //  },
-    //  "dest": {
-    //    "index": "dest_index"
-    //  },
-    //  "script": {
-    //    "source": """
-    //      ctx._id = 'new_' + ctx._id;
-    //    """
-    //  }
-    //}
+    /**
+     * Reindex one document into its transformed destination fqmn.
+     *
+     * This first reindexes the source doc into a temp index, reads the transformed fqmn,
+     * reindexes it back into the destination index, and deletes the original doc last.
+     */
     public Result reindex(@NonNull String fqmn, @NonNull MetaplusDoc doc, String source,
                           PatchOptions patchOptions) {
         Idea oldIdea = Idea.of(fqmn);
@@ -179,7 +166,7 @@ public class DocDao {
                 "dest", JsonObject.of(
                         "index", INDEX_REINDEX_TMP_0),
                 "script", JsonObject.of(
-                        "source", valuesStore.composeScript(targetDomain, source),
+                        "source", valueStore.composeScript(targetDomain, source),
                         "params", doc));
 
         EsResponse response = esClient.post(uri1, body1);
@@ -230,8 +217,9 @@ public class DocDao {
 
         return response2.getOpResult();
     }
-
-
+    /**
+     * Delete one document by fqmn.
+     */
     public Result delete(@NonNull String fqmn, PatchOptions patchOptions) {
         EsResponse response = _deleteRaw(fqmn, patchOptions);
         if (!response.isSuccess()) {
@@ -239,8 +227,9 @@ public class DocDao {
         }
         return response.getOpResult();
     }
-
-
+    /**
+     * Read one document by fqmn.
+     */
     public MetaplusDoc read(@NonNull String fqmn, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
         String index = StorageUtil.storageIndex(idea.getDomain());
@@ -259,6 +248,9 @@ public class DocDao {
         }
     }
 
+    /**
+     * Check whether one document exists.
+     */
     public boolean exist(@NonNull String fqmn, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
         String index = StorageUtil.storageIndex(idea.getDomain());
@@ -276,8 +268,9 @@ public class DocDao {
             throw _failureWithEsResponse("exist", "fqmn=" + fqmn, response);
         }
     }
-
-
+    /**
+     * Update matching documents by query.
+     */
     public Result updateByQuery(@NonNull String domainName, @NonNull Query query, @NonNull Script script,
                                 PatchOptions patchOptions) {
         Script fixedScript = _copyScriptWithComposedSource(script, domainName);
@@ -288,8 +281,9 @@ public class DocDao {
         }
         return response.getOpResult();
     }
-
-
+    /**
+     * Delete matching documents by query.
+     */
     public Result deleteByQuery(@NonNull String domainName, @NonNull Query query,
                                 PatchOptions patchOptions) {
         EsResponse response = _operateByQuery("_delete_by_query", domainName, query, null, patchOptions);
@@ -313,6 +307,9 @@ public class DocDao {
         return esClient.post(uri, body);
     }
 
+    /**
+     * Reindex matching documents and delete captured originals.
+     */
     public Result reindexByQuery(@NonNull String domainName, @NonNull Query query, @NonNull Script script,
                                  Map<String, String> fqmnMapping, PatchOptions patchOptions) {
         String index = StorageUtil.storageIndex(domainName);
@@ -328,11 +325,15 @@ public class DocDao {
                     .build().toUri();
 
             Script fixedScript = _copyScriptWithComposedSource(script, domainName);
+            JsonObject source1 = JsonObject.of(
+                    "index", index,
+                    "sort", JsonArray.of(JsonObject.of("_doc", "asc")),
+                    "size", REINDEX_BY_QUERY_BATCH_SIZE);
+            if (!query.isEmpty()) {
+                source1.put("query", query);
+            }
             JsonObject body1 = JsonObject.of(
-                    "source", JsonObject.of("index", index,
-                            "query", query,
-                            "sort", JsonArray.of(JsonObject.of("_doc", "asc")),
-                            "size", REINDEX_BY_QUERY_BATCH_SIZE),
+                    "source", source1,
                     "dest", JsonObject.of("index", tmpIndex),
                     "script", fixedScript);
 
@@ -379,6 +380,9 @@ public class DocDao {
 
     /// by domain
 
+    /**
+     * Refresh one domain index.
+     */
     public void refresh(String domain, PatchOptions patchOptions) {
         String index = StorageUtil.storageIndex(domain);
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_refresh");
@@ -391,6 +395,9 @@ public class DocDao {
         }
     }
 
+    /**
+     * Read documents from one domain.
+     */
     public SearchResponse<MetaplusDoc> readByDomain(@NonNull String domain, int size, JsonArray sort,
                                                     PatchOptions patchOptions) {
         String index = StorageUtil.storageIndex(domain);
@@ -401,9 +408,9 @@ public class DocDao {
                 .queryParam("size", size)
                 .build(index);
 
-        SearchRequest search = new SearchRequest();
+        JsonObject search = new JsonObject();
         if (null != sort) {
-            search.setSort(sort);
+            search.put("sort", sort);
         }
 
         EsResponse response = esClient.post(uri, search);
@@ -414,6 +421,9 @@ public class DocDao {
         }
     }
 
+    /**
+     * Count documents in one domain.
+     */
     public int countByDomain(String domain, PatchOptions patchOptions) {
         String index = StorageUtil.storageIndex(domain);
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_count");
@@ -733,7 +743,7 @@ public class DocDao {
     private Script _copyScriptWithComposedSource(@NonNull Script script, @NonNull String domainName) {
         Script copied = new Script();
         copied.mergeWithCopy(script);
-        copied.setSource(valuesStore.composeScript(domainName, script.getSource()));
+        copied.setSource(valueStore.composeScript(domainName, script.getSource()));
         return copied;
     }
 

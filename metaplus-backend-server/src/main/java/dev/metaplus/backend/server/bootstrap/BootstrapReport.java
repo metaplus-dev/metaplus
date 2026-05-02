@@ -15,14 +15,23 @@ public class BootstrapReport {
     @Setter
     private int loadedDomainCount;
 
+    /**
+     * Mark that the domain index was created during bootstrap.
+     */
     public void markCreatedDomainIndex() {
         createdDomainIndex = true;
     }
 
+    /**
+     * Record one created built-in domain.
+     */
     public void addCreatedBuiltInDomain(String domainName) {
         createdBuiltInDomains.add(domainName);
     }
 
+    /**
+     * Record one skipped built-in domain.
+     */
     public void addSkippedBuiltInDomain(String domainName) {
         skippedBuiltInDomains.add(domainName);
     }

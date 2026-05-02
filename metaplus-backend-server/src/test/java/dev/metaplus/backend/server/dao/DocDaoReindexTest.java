@@ -2,7 +2,7 @@ package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.exception.MetaplusException;
 import dev.metaplus.core.model.Idea;
 import dev.metaplus.core.model.MetaplusDoc;
@@ -31,21 +31,21 @@ import static org.mockito.Mockito.when;
 class DocDaoReindexTest {
 
     private EsClient esClient;
-    private ValuesStore valuesStore;
+    private ValueStore valueStore;
     private DocDao docDao;
 
     @BeforeEach
     void setUp() {
         esClient = mock(EsClient.class);
-        valuesStore = mock(ValuesStore.class);
+        valueStore = mock(ValueStore.class);
         IndexDao indexDao = mock(IndexDao.class);
 
-        when(valuesStore.composeScript(anyString(), anyString()))
+        when(valueStore.composeScript(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(1));
         when(indexDao.existIndex(anyString())).thenReturn(true);
         doNothing().when(indexDao).createIndex(anyString(), any(JsonObject.class));
 
-        docDao = new DocDao(esClient, valuesStore, indexDao);
+        docDao = new DocDao(esClient, valueStore, indexDao);
     }
 
     @Test
@@ -112,7 +112,7 @@ class DocDaoReindexTest {
         assertEquals(2, reindexBodies.size());
         assertEquals("i_metaplus_domain_old", reindexBodies.get(0).getJsonObject("source").getString("index"));
         assertEquals("i_metaplus_domain_new", reindexBodies.get(1).getJsonObject("dest").getString("index"));
-        verify(valuesStore).composeScript(eq("new"), anyString());
+        verify(valueStore).composeScript(eq("new"), anyString());
     }
 
     @Test

@@ -42,6 +42,9 @@ public class BackendServerApp {
               java -jar metaplus-backend-server.jar --metaplus.bootstrap.mode=bootstrap
             """;
 
+    /**
+     * Start the backend server application.
+     */
     public static void main(String[] args) {
         if (_containsHelpFlag(args)) {
             System.out.println(HELP_TEXT);
@@ -67,6 +70,9 @@ public class BackendServerApp {
         return false;
     }
 
+    /**
+     * Register the SJF4J HTTP message converter.
+     */
     @Bean
     public HttpMessageConverter<Object> createJsonObjectMessageConverter() {
         return new SpringMvcSjf4jMessageConverter();

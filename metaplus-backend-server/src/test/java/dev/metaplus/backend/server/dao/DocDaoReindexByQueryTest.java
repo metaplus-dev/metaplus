@@ -2,7 +2,7 @@ package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.exception.MetaplusException;
 import dev.metaplus.core.model.patch.PatchOptions;
 import dev.metaplus.core.model.patch.Script;
@@ -37,15 +37,15 @@ class DocDaoReindexByQueryTest {
     @BeforeEach
     void setUp() {
         esClient = mock(EsClient.class);
-        ValuesStore valuesStore = mock(ValuesStore.class);
+        ValueStore valueStore = mock(ValueStore.class);
         IndexDao indexDao = mock(IndexDao.class);
 
-        when(valuesStore.composeScript(anyString(), anyString()))
+        when(valueStore.composeScript(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(1));
         doNothing().when(indexDao).createIndex(anyString(), any(JsonObject.class));
         doNothing().when(indexDao).deleteIndex(anyString());
 
-        docDao = new DocDao(esClient, valuesStore, indexDao);
+        docDao = new DocDao(esClient, valueStore, indexDao);
     }
 
     @Test

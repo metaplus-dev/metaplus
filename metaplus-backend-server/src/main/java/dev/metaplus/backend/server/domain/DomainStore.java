@@ -27,19 +27,31 @@ public class DomainStore {
     private final Map<String, DomainDoc> domainCache = new ConcurrentHashMap<>();
 
 
+    /**
+     * Put one domain doc into the cache.
+     */
     public void putDomainDoc(DomainDoc domainDoc) {
         _validateDomainDoc(domainDoc);
         domainCache.put(domainDoc.getMetaDomainName(), domainDoc);
     }
 
+    /**
+     * Return one cached domain doc, or null.
+     */
     public DomainDoc getDomainDoc(@NonNull String domainName) {
         return domainCache.get(domainName);
     }
 
+    /**
+     * Return all cached domain docs.
+     */
     public List<DomainDoc> getAllDomainDocs() {
         return new ArrayList<>(domainCache.values());
     }
 
+    /**
+     * Return one cached domain doc, or fail if missing.
+     */
     public DomainDoc getDomainDocOrElseThrow(String domainName) {
         DomainDoc domainDoc = getDomainDoc(domainName);
         if (null == domainDoc) {
@@ -48,18 +60,30 @@ public class DomainStore {
         return domainDoc;
     }
 
+    /**
+     * Check whether one domain exists.
+     */
     public boolean existDomain(String domainName) {
         return DOMAIN_DOMAIN.equals(domainName) || null != getDomainDoc(domainName);
     }
 
+    /**
+     * Remove one domain from the cache.
+     */
     public void deleteDomain(String domainName) {
         domainCache.remove(domainName);
     }
 
+    /**
+     * Clear all cached domains.
+     */
     public void clear() {
         domainCache.clear();
     }
 
+    /**
+     * Return all non-system concrete domains.
+     */
     public Set<String> customDomainSet() {
         Set<String> domains = new HashSet<>();
         domainCache.forEach((domain, domainDoc) -> {
@@ -70,24 +94,39 @@ public class DomainStore {
         return domains;
     }
 
+    /**
+     * Return the template domain name for one domain.
+     */
     public String getTemplateDomain(String domainName) {
         DomainDoc domainDoc = getDomainDocOrElseThrow(domainName);
         return domainDoc.getMetaDomainTemplate();
     }
 
+    /**
+     * Return merged storage without Metaplus-only metadata keys.
+     */
     public JsonObject getMergedPureStorage(String domainName) {
         return StorageUtil.pureStorage(getMergedStorage(domainName));
     }
 
+    /**
+     * Return merged storage for one domain name.
+     */
     public JsonObject getMergedStorage(String domainName) {
         return getMergedStorage(getDomainDocOrElseThrow(domainName));
     }
 
+    /**
+     * Return merged mappings for one domain name.
+     */
     public JsonObject getMergedMappings(String domainName) {
         JsonObject mergedStorage = getMergedStorage(domainName);
         return mergedStorage == null ? null : mergedStorage.getJsonObject("mappings");
     }
 
+    /**
+     * Return merged storage for one domain doc.
+     */
     public JsonObject getMergedStorage(DomainDoc domainDoc) {
         return _buildRichStorageRecursively(domainDoc);
     }

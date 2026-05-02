@@ -29,6 +29,9 @@ public class SearchDao {
     @Autowired
     private EsClient esClient;
 
+    /**
+     * Search across one or more domains.
+     */
     public SearchResponse<JsonObject> search(@NonNull Set<String> domainNames,
                                              @NonNull SearchRequest searchRequest,
                                              SearchOptions searchOptions) {
@@ -47,12 +50,18 @@ public class SearchDao {
         return response.getBodyAsSearchResponse(JsonObject.class);
     }
 
+    /**
+     * Search within one domain.
+     */
     public SearchResponse<JsonObject> search(@NonNull String domainName,
                                              @NonNull SearchRequest searchRequest,
                                              SearchOptions searchOptions) {
         return search(Set.of(domainName), searchRequest, searchOptions);
     }
 
+    /**
+     * Run aggregations across one or more domains.
+     */
     public AggResponse agg(@NonNull Set<String> domainNames,
                            @NonNull AggRequest aggRequest,
                            SearchOptions searchOptions) {
@@ -79,6 +88,9 @@ public class SearchDao {
         return Jsons.fromNode(response.getBody(), AggResponse.class);
     }
 
+    /**
+     * Run aggregations within one domain.
+     */
     public AggResponse agg(@NonNull String domainName,
                            @NonNull AggRequest aggRequest,
                            SearchOptions searchOptions) {

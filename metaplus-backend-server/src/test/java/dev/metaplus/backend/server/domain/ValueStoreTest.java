@@ -11,12 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ValuesStoreTest {
+class ValueStoreTest {
 
     @Test
     void composeScript_includesInheritedDerivedAssignmentsAndCachesCompiledFragment() {
         DomainStore domainStore = new DomainStore();
-        ValuesStore valuesStore = new ValuesStore(domainStore);
+        ValueStore valueStore = new ValueStore(domainStore);
 
         domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
@@ -37,9 +37,9 @@ class ValuesStoreTest {
                 )
         )));
 
-        String script = valuesStore.composeScript("child", "ctx._source.meta.version = 1");
-        String derived1 = valuesStore.getDerivedAssignmentScriptOrElseThrow("child");
-        String derived2 = valuesStore.getDerivedAssignmentScriptOrElseThrow("child");
+        String script = valueStore.composeScript("child", "ctx._source.meta.version = 1");
+        String derived1 = valueStore.getDerivedAssignmentScriptOrElseThrow("child");
+        String derived2 = valueStore.getDerivedAssignmentScriptOrElseThrow("child");
 
         assertTrue(script.contains("putByPath(ctx._source, 'idea.fqmn', idea.domain + ':' + idea.system);"));
         assertTrue(script.contains("putByPath(ctx._source, 'plus.code', 'child_' + idea.domain);"));
@@ -85,7 +85,7 @@ class ValuesStoreTest {
     @Test
     void composeScript_writesDerivedWithPutByPathAndKeepsPropertiesFieldSafe() {
         DomainStore domainStore = new DomainStore();
-        ValuesStore valuesStore = new ValuesStore(domainStore);
+        ValueStore valueStore = new ValueStore(domainStore);
 
         domainStore.putDomainDoc(_domainDoc("domain", null, JsonObject.of(
                 "properties", JsonObject.of(
@@ -101,7 +101,7 @@ class ValuesStoreTest {
                 )
         )));
 
-        String script = valuesStore.composeScript("domain", "");
+        String script = valueStore.composeScript("domain", "");
 
         assertTrue(script.contains("putByPath(ctx._source, 'meta.properties.name', 'p_' + idea.domain);"));
         assertFalse(script.contains("\n'p_' + idea.domain\n"));
@@ -111,7 +111,7 @@ class ValuesStoreTest {
     @Test
     void composeScript_ordersTemplateParentBeforeChildAndChildOverrideLater() {
         DomainStore domainStore = new DomainStore();
-        ValuesStore valuesStore = new ValuesStore(domainStore);
+        ValueStore valueStore = new ValueStore(domainStore);
 
         domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
@@ -132,7 +132,7 @@ class ValuesStoreTest {
                 )
         )));
 
-        String script = valuesStore.composeScript("child", "");
+        String script = valueStore.composeScript("child", "");
         String parentAssignment = "putByPath(ctx._source, 'idea.fqmn', idea.domain + '_base');";
         String childAssignment = "putByPath(ctx._source, 'idea.fqmn', idea.domain + '_child');";
 
@@ -144,7 +144,7 @@ class ValuesStoreTest {
     @Test
     void composeScript_recompilesCachedChildWhenParentMappingsChange() {
         DomainStore domainStore = new DomainStore();
-        ValuesStore valuesStore = new ValuesStore(domainStore);
+        ValueStore valueStore = new ValueStore(domainStore);
 
         domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
@@ -159,7 +159,7 @@ class ValuesStoreTest {
                 "properties", JsonObject.of()
         )));
 
-        String scriptV1 = valuesStore.composeScript("child", "");
+        String scriptV1 = valueStore.composeScript("child", "");
 
         domainStore.putDomainDoc(_domainDoc("base", null, JsonObject.of(
                 "properties", JsonObject.of(
@@ -171,7 +171,7 @@ class ValuesStoreTest {
                 )
         )));
 
-        String scriptV2 = valuesStore.composeScript("child", "");
+        String scriptV2 = valueStore.composeScript("child", "");
 
         assertTrue(scriptV1.contains("putByPath(ctx._source, 'idea.fqmn', 'v1_' + idea.domain);"));
         assertTrue(scriptV2.contains("putByPath(ctx._source, 'idea.fqmn', 'v2_' + idea.domain);"));

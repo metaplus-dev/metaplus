@@ -1,9 +1,11 @@
 package dev.metaplus.backend.server.domain;
 
+import dev.metaplus.backend.server.bootstrap.BuiltInDomainCatalog;
 import dev.metaplus.core.model.DomainDoc;
 import org.junit.jupiter.api.Test;
 import org.sjf4j.JsonObject;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -95,9 +97,10 @@ class DomainStoreTest {
     }
 
     @Test
-    void toPureStorage_removesDollarPrefixedMetadata() {
+    void toPureStorage_removesDollarPrefixedMetadataAndKeepsOnlyEsStorageSections() {
         JsonObject mergedStorage = JsonObject.of(
                 "$kind", "storage",
+                "index", "i_demo",
                 "mappings", JsonObject.of(
                         "properties", JsonObject.of(
                                 "name", JsonObject.of(
@@ -114,6 +117,7 @@ class DomainStoreTest {
         JsonObject pureStorage = StorageUtil.pureStorage(mergedStorage);
 
         assertNull(pureStorage.getString("$kind"));
+        assertNull(pureStorage.getString("index"));
         assertNull(pureStorage.getJsonObject("settings").getString("$comment"));
         assertNull(pureStorage.getJsonObject("mappings")
                 .getJsonObject("properties")
@@ -123,6 +127,30 @@ class DomainStoreTest {
                 .getJsonObject("properties")
                 .getJsonObject("name")
                 .getString("type"));
+    }
+
+    @Test
+    void builtInDomainCatalog_docsKeepDerivedValueExpressions() {
+        BuiltInDomainCatalog builtInDomainCatalog = new BuiltInDomainCatalog();
+        DomainStore domainStore = new DomainStore();
+        ValueStore valueStore = new ValueStore(domainStore);
+
+        for (DomainDoc domainDoc : builtInDomainCatalog.listBuiltInDomainDocs()) {
+            domainStore.putDomainDoc(domainDoc);
+            valueStore.putDomainDoc(domainDoc);
+        }
+
+        assertEquals("${idea.domain}:${idea.system}:${idea.instance}:${idea.entity}",
+                domainStore.getDomainDocOrElseThrow("none").getMetaStorageMappings()
+                        .getJsonObject("properties")
+                        .getJsonObject("idea")
+                        .getJsonObject("properties")
+                        .getJsonObject("fqmn")
+                        .getString("$value"));
+        String noneScript = valueStore.getDerivedAssignmentScriptOrElseThrow("none");
+        String domainScript = valueStore.getDerivedAssignmentScriptOrElseThrow("domain");
+        assertFalse(noneScript.isBlank());
+        assertFalse(domainScript.isBlank());
     }
 
     @Test

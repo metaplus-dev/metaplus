@@ -5,7 +5,7 @@ import dev.metaplus.backend.server.dao.IndexDao;
 import dev.metaplus.backend.server.domain.DomainStore;
 import dev.metaplus.backend.server.domain.SchemaStore;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.backend.server.es.EsIntegrationTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ class BootstrapServiceIT extends EsIntegrationTestSupport {
 
     private DomainStore domainStore;
     private SchemaStore schemaStore;
-    private ValuesStore valuesStore;
+    private ValueStore valueStore;
     private IndexDao indexDao;
     private DocDao docDao;
     private BootstrapService domainBootstrapService;
@@ -31,11 +31,11 @@ class BootstrapServiceIT extends EsIntegrationTestSupport {
     void setUpService() {
         domainStore = new DomainStore();
         schemaStore = new SchemaStore(domainStore);
-        valuesStore = new ValuesStore(domainStore);
+        valueStore = new ValueStore(domainStore);
         indexDao = new IndexDao(esClient);
-        docDao = new DocDao(esClient, valuesStore, indexDao);
+        docDao = new DocDao(esClient, valueStore, indexDao);
         domainBootstrapService = new BootstrapService(new BuiltInDomainCatalog(), esClient, indexDao, docDao,
-                domainStore, schemaStore, valuesStore);
+                domainStore, schemaStore, valueStore);
     }
 
     @AfterEach
@@ -59,7 +59,7 @@ class BootstrapServiceIT extends EsIntegrationTestSupport {
         assertNotNull(domainStore.getDomainDoc("none"));
         assertNotNull(domainStore.getDomainDoc("domain"));
         assertNotNull(schemaStore.validateDomainSchema(domainStore.getDomainDocOrElseThrow("none")));
-        assertFalse(valuesStore.getDerivedAssignmentScriptOrElseThrow("domain").isBlank());
+        assertFalse(valueStore.getDerivedAssignmentScriptOrElseThrow("domain").isBlank());
 
         assertFalse(second.isCreatedDomainIndex());
         assertEquals(0, second.getCreatedBuiltInDomains().size());

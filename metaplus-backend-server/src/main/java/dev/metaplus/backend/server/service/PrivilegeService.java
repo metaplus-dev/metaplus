@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class PrivilegeService {
 
+    /**
+     * Check write privilege for the current caller.
+     */
     public void checkPrivilege() {
         // TODO
     }

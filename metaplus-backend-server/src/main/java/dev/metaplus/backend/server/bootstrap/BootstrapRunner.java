@@ -19,6 +19,9 @@ public class BootstrapRunner implements ApplicationRunner {
     @Value("${metaplus.bootstrap.mode:verify}")
     private String bootstrapMode;
 
+    /**
+     * Run bootstrap according to the configured startup mode.
+     */
     @Override
     public void run(ApplicationArguments args) {
         String mode = bootstrapMode == null ? "off" : bootstrapMode.trim().toLowerCase(Locale.ROOT);

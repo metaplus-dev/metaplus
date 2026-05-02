@@ -19,13 +19,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
-public class ValuesStore {
+public class ValueStore {
 
+    // Apply derived fields in stable section order.
     private static final List<String> DERIVED_SECTION_ORDER = Arrays.asList("idea", "meta", "plus");
 
     private final DomainStore domainStore;
 
-    public ValuesStore(DomainStore domainStore) {
+    public ValueStore(DomainStore domainStore) {
         this.domainStore = domainStore;
     }
 
@@ -102,6 +103,7 @@ public class ValuesStore {
     public static final String SCRIPT_MERGE_PARAMS_META = "merge(meta, params.meta);";
     public static final String SCRIPT_MERGE_PARAMS_PLUS = "merge(plus, params.plus);";
 
+    // Shared script prefix for update and reindex operations.
     public static final String SCRIPT_BEFORE_ALL_IN_ONE = SCRIPT_FUNC_MERGE +
             SCRIPT_FUNC_IF_NOT_EMPTY + SCRIPT_FUNC_REQUIRE_NON_EMPTY +
             SCRIPT_FUNC_GET_BY_PATH + SCRIPT_FUNC_PUT_BY_PATH +
@@ -111,16 +113,25 @@ public class ValuesStore {
             SCRIPT_MERGE_PARAMS_META + SCRIPT_MERGE_PARAMS_PLUS;
 
 
+    // Cache compiled $value expressions by domain.
     private final Map<String, Map<String, String>> domainValueExprsCache = new ConcurrentHashMap<>();
+    // Cache full derived assignment script by domain.
     private final Map<String, DerivedScriptCacheEntry> domainDerivedScriptCache = new ConcurrentHashMap<>();
 
+    /**
+     * Load value expressions from one domain doc.
+     */
     public void putDomainDoc(DomainDoc domainDoc) {
         putFromMappings(domainDoc.getMetaDomainName(), domainDoc.getMetaStorageMappings());
     }
 
+    /**
+     * Rebuild cached value expressions from storage mappings.
+     */
     public void putFromMappings(String domain, JsonObject mappings) {
         Map<String, String> valueExprs = new LinkedHashMap<>();
         if (mappings != null) {
+            // Collect all declared $value expressions from storage mappings.
             mappings.walk(Nodes.WalkTarget.CONTAINER, Nodes.WalkOrder.TOP_DOWN, -1, (path, node) -> {
                 String rawValueExpr = Nodes.getInObject(node, "$value", String.class);
                 if (rawValueExpr != null) {
@@ -134,20 +145,32 @@ public class ValuesStore {
         domainDerivedScriptCache.clear();
     }
 
+    /**
+     * Remove one domain from caches.
+     */
     public void deleteDomain(String domain) {
         domainValueExprsCache.remove(domain);
         domainDerivedScriptCache.clear();
     }
 
+    /**
+     * Clear all cached domains.
+     */
     public void clear() {
         domainValueExprsCache.clear();
         domainDerivedScriptCache.clear();
     }
 
+    /**
+     * Return cached value expressions, or null.
+     */
     public Map<String, String> getValueExprs(String domain) {
         return domainValueExprsCache.get(domain);
     }
 
+    /**
+     * Return cached value expressions, or fail if missing.
+     */
     public Map<String, String> getValueExprsOrElseThrow(String domain) {
         Map<String, String> valueExprs = getValueExprs(domain);
         if (null == valueExprs) {
@@ -157,6 +180,9 @@ public class ValuesStore {
     }
 
 
+    /**
+     * Join cached value expressions for debugging.
+     */
     public String getValueExprsAsString(String domain) {
         Map<String, String> valueExprs = getValueExprsOrElseThrow(domain);
         StringBuilder sb = new StringBuilder();
@@ -164,10 +190,17 @@ public class ValuesStore {
         return sb.toString();
     }
 
+    /**
+     * Compose final painless script for one domain.
+     */
     public String composeScript(String domain, String userSource) {
+        // User script runs first, then derived assignments overwrite computed fields.
         return SCRIPT_BEFORE_ALL_IN_ONE + _normalizeUserSource(userSource) + getDerivedAssignmentScriptOrElseThrow(domain);
     }
 
+    /**
+     * Build derived assignment script from the full template chain.
+     */
     public String getDerivedAssignmentScriptOrElseThrow(String domain) {
         domainStore.getDomainDocOrElseThrow(domain);
         List<String> templateChain = new ArrayList<>();
@@ -184,6 +217,7 @@ public class ValuesStore {
         return compiled;
     }
 
+    // Normalize user script for safe concatenation.
     private String _normalizeUserSource(String userSource) {
         if (userSource == null) {
             return "";
@@ -195,9 +229,11 @@ public class ValuesStore {
         return source;
     }
 
+    // Compile assignments in parent-to-child order.
     private String _compileDerivedAssignmentsWithTemplateOrder(List<String> templateChain) {
         List<DerivedAssignment> orderedAssignments = new ArrayList<>();
         for (String currentDomain : templateChain) {
+            // Parent template assignments are emitted before child assignments.
             DomainDoc currentDomainDoc = domainStore.getDomainDocOrElseThrow(currentDomain);
             orderedAssignments.addAll(_collectDerivedAssignments(currentDomainDoc.getMetaStorageMappings()));
         }
@@ -213,6 +249,7 @@ public class ValuesStore {
         return script.toString();
     }
 
+    // Build a cache signature from template names and mappings.
     private String _buildTemplateChainSignature(List<String> templateChain) {
         StringBuilder signature = new StringBuilder();
         for (String currentDomain : templateChain) {
@@ -224,14 +261,17 @@ public class ValuesStore {
         return signature.toString();
     }
 
+    // Collect template chain from root template to current domain.
     private void _collectTemplateChainRootFirst(String domain, List<String> out) {
         String templateDomain = domainStore.getTemplateDomain(domain);
         if (StringUtils.hasText(templateDomain)) {
             _collectTemplateChainRootFirst(templateDomain, out);
         }
+        // Root template first, current domain last.
         out.add(domain);
     }
 
+    // Collect derived assignments from mappings.
     private List<DerivedAssignment> _collectDerivedAssignments(JsonObject mappings) {
         List<DerivedAssignment> assignments = new ArrayList<>();
         if (mappings == null) {
@@ -242,17 +282,17 @@ public class ValuesStore {
             return assignments;
         }
         for (String section : DERIVED_SECTION_ORDER) {
-            Object sectionNode = rootProperties.get(section);
+            JsonObject sectionNode = rootProperties.getJsonObject(section);
             _collectDerivedAssignmentsInNode(sectionNode, section, assignments);
         }
         return assignments;
     }
 
-    private void _collectDerivedAssignmentsInNode(Object node, String logicalPath, List<DerivedAssignment> out) {
-        if (!(node instanceof JsonObject)) {
+    // Walk one mapping node and collect nested $value assignments.
+    private void _collectDerivedAssignmentsInNode(JsonObject objectNode, String logicalPath, List<DerivedAssignment> out) {
+        if (objectNode == null) {
             return;
         }
-        JsonObject objectNode = (JsonObject) node;
         String rawValueExpr = objectNode.getString("$value");
         if (rawValueExpr != null && !logicalPath.isEmpty()) {
             out.add(new DerivedAssignment(logicalPath, ValueExprUtil.toPainlessValueExpr(rawValueExpr)));
@@ -264,7 +304,7 @@ public class ValuesStore {
         }
         properties.forEach((key, childNode) -> {
             String childPath = logicalPath.isEmpty() ? key : logicalPath + "." + key;
-            _collectDerivedAssignmentsInNode(childNode, childPath, out);
+            _collectDerivedAssignmentsInNode(properties.getJsonObject(key), childPath, out);
         });
     }
 

@@ -54,7 +54,8 @@
                     "analyzer": "path_analyzer"
                   },
                   "criticality": {
-                    "type": "keyword"
+                    "type": "keyword",
+                    "$description": "Relative importance of the document for enrichment and operational attention. Suggested values: low, medium, high, critical. Not currently schema-enforced."
                   }
                 }
               }
@@ -154,11 +155,12 @@
       "$ref": "https://metaplus.dev/json-schemas/metaplus_doc.json"
     }
   },
-  "plus": {},
-  "edit": {
-    "meta": {
-      "createdAt": "__createdAt__",
-      "createdBy": "__createdBy__"
+  "plus": {
+    "core": {
+      "readme": "Root template domain for all domain definitions.",
+      "taxonomy": "domain/none",
+      "criticality": "high"
     }
-  }
+  },
+  "edit": {}
 }

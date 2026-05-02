@@ -7,7 +7,7 @@ import dev.metaplus.backend.server.dao.IndexDao;
 import dev.metaplus.backend.server.domain.DomainStore;
 import dev.metaplus.backend.server.domain.SchemaStore;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.backend.server.es.EsIntegrationTestSupport;
 import dev.metaplus.core.model.DomainDoc;
 import dev.metaplus.core.model.Idea;
@@ -27,7 +27,7 @@ class DomainServiceIT extends EsIntegrationTestSupport {
 
     private DomainStore domainStore;
     private SchemaStore schemaStore;
-    private ValuesStore valuesStore;
+    private ValueStore valueStore;
     private IndexDao indexDao;
     private DocDao docDao;
     private DomainService domainService;
@@ -37,15 +37,15 @@ class DomainServiceIT extends EsIntegrationTestSupport {
     void setUpService() {
         domainStore = new DomainStore();
         schemaStore = new SchemaStore(domainStore);
-        valuesStore = new ValuesStore(domainStore);
+        valueStore = new ValueStore(domainStore);
 
         indexDao = new IndexDao(esClient);
 
-        docDao = new DocDao(esClient, valuesStore, indexDao);
+        docDao = new DocDao(esClient, valueStore, indexDao);
         domainBootstrapService = new BootstrapService(new BuiltInDomainCatalog(), esClient, indexDao, docDao,
-                domainStore, schemaStore, valuesStore);
+                domainStore, schemaStore, valueStore);
 
-        domainService = new DomainService(docDao, indexDao, domainStore, schemaStore, valuesStore,
+        domainService = new DomainService(docDao, indexDao, domainStore, schemaStore, valueStore,
                 new PrivilegeService());
 
         domainBootstrapService.bootstrapBuiltInsAndLoadDomainRegistry();
@@ -73,7 +73,7 @@ class DomainServiceIT extends EsIntegrationTestSupport {
         assertEquals(customDomainName, loaded.getMetaDomainName());
         assertEquals("domain:metaplus:main:" + customDomainName, loaded.getIdeaFqmn());
         assertNotNull(domainStore.getDomainDoc(customDomainName));
-        assertTrue(valuesStore.getDerivedAssignmentScriptOrElseThrow(customDomainName)
+        assertTrue(valueStore.getDerivedAssignmentScriptOrElseThrow(customDomainName)
                 .contains("putByPath(ctx._source, 'idea.fqmn'"));
         assertNotNull(docDao.read("domain:metaplus:main:" + customDomainName, null));
     }

@@ -3,8 +3,7 @@ package dev.metaplus.backend.server.dao;
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
 import dev.metaplus.backend.server.BackendServerException;
-import dev.metaplus.backend.server.dao.IndexDao;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.model.Idea;
 import dev.metaplus.core.model.MetaplusDoc;
 import dev.metaplus.core.model.patch.Result;
@@ -25,21 +24,21 @@ import static org.mockito.Mockito.when;
 class DocDaoCreateTest {
 
     private EsClient esClient;
-    private ValuesStore valuesStore;
+    private ValueStore valueStore;
     private DocDao docDao;
 
     @BeforeEach
     void setUp() {
         esClient = mock(EsClient.class);
-        valuesStore = mock(ValuesStore.class);
-        docDao = new DocDao(esClient, valuesStore, mock(IndexDao.class));
+        valueStore = mock(ValueStore.class);
+        docDao = new DocDao(esClient, valueStore, mock(IndexDao.class));
     }
 
     @Test
     void createUsesCreateOnlyScriptedUpdate() {
         AtomicReference<URI> uriRef = new AtomicReference<>();
         AtomicReference<JsonObject> bodyRef = new AtomicReference<>();
-        when(valuesStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
+        when(valueStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
         when(esClient.post(any(URI.class), any(JsonObject.class))).thenAnswer(invocation -> {
             uriRef.set(invocation.getArgument(0));
             bodyRef.set(invocation.getArgument(1));
@@ -63,7 +62,7 @@ class DocDaoCreateTest {
 
     @Test
     void createUsesNormalizedFailureMessage() {
-        when(valuesStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
+        when(valueStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
         when(esClient.post(any(URI.class), any(JsonObject.class)))
                 .thenReturn(new EsResponse(409, JsonObject.of("error", "version_conflict_engine_exception")));
 
@@ -80,7 +79,7 @@ class DocDaoCreateTest {
 
     @Test
     void createReturnsNoopWhenDocumentAlreadyExists() {
-        when(valuesStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
+        when(valueStore.composeScript("demo", null)).thenReturn("ctx._source.idea = params.idea;");
         when(esClient.post(any(URI.class), any(JsonObject.class)))
                 .thenReturn(new EsResponse(200, JsonObject.of("_id", "demo:mysql:main:orders", "result", "noop")));
 

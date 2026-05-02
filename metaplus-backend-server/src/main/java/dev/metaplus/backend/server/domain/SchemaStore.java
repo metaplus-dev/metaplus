@@ -47,6 +47,9 @@ public class SchemaStore {
         this.coreSchemaRegistry = _buildCoreSchemaRegistry();
     }
 
+    /**
+     * Compile and cache one domain schema.
+     */
     public void putDomainDoc(@NonNull DomainDoc domainDoc) {
         String domainName = domainDoc.getMetaDomainName();
         Assert.hasText(domainName, "meta.domain.name must not be blank");
@@ -55,14 +58,23 @@ public class SchemaStore {
         domainSchemaCache.put(domainName, compiledSchema);
     }
 
+    /**
+     * Remove one domain schema from the cache.
+     */
     public void deleteDomain(String domainName) {
         domainSchemaCache.remove(domainName);
     }
 
+    /**
+     * Clear all cached domain schemas.
+     */
     public void clear() {
         domainSchemaCache.clear();
     }
 
+    /**
+     * Validate one document against its domain schema.
+     */
     public void validateDoc(@NonNull MetaplusDoc doc) {
         String domainName = doc.getIdeaDomain();
         if (!StringUtils.hasText(domainName)) {
@@ -73,6 +85,9 @@ public class SchemaStore {
         compiledSchema.requireValid(doc);
     }
 
+    /**
+     * Validate and compile one domain schema.
+     */
     public JsonSchema validateDomainSchema(@NonNull DomainDoc domainDoc) {
         String domainName = domainDoc.getMetaDomainName();
         Assert.hasText(domainName, "meta.domain.name must not be blank");

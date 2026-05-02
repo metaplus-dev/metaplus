@@ -4,7 +4,7 @@ import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
 import dev.metaplus.backend.server.BackendServerException;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.model.Idea;
 import dev.metaplus.core.model.MetaplusDoc;
 import dev.metaplus.core.model.patch.PatchOptions;
@@ -34,6 +34,9 @@ public class TrashDao {
     public static final String DOMAIN_TRASH = "trash";
     public static final String INDEX_TRASH = StorageUtil.storageIndex(DOMAIN_TRASH);
 
+    /**
+     * Upsert one document into trash by id.
+     */
     public Result upsertById(@NonNull MetaplusDoc doc, PatchOptions patchOptions) {
         String id = doc.getIdeaFqmn();
         Assert.hasText(id, "doc.idea.fqmn must not be blank");
@@ -49,6 +52,9 @@ public class TrashDao {
         return response.getOpResult();
     }
 
+    /**
+     * Copy one live document into trash.
+     */
     public Result copy(@NonNull String fqmn, Script script, PatchOptions patchOptions) {
         Idea idea = Idea.of(fqmn);
         String sourceIndex = StorageUtil.storageIndex(idea.getDomain());
@@ -72,6 +78,9 @@ public class TrashDao {
         return response.getOpResult();
     }
 
+    /**
+     * Copy matching live documents into trash.
+     */
     public Result copyByQuery(@NonNull String domainName, @NonNull Query query, Script script,
                               PatchOptions patchOptions) {
         String sourceIndex = StorageUtil.storageIndex(domainName);
@@ -94,6 +103,9 @@ public class TrashDao {
         return response.getOpResult();
     }
 
+    /**
+     * Count trash versions for one fqmn.
+     */
     public int count(@NonNull String fqmn, SearchOptions searchOptions) {
         URI uri = _buildCountUri(searchOptions);
 
@@ -107,6 +119,9 @@ public class TrashDao {
         return response.getBody().getInt("count", 0);
     }
 
+    /**
+     * Read multiple trash versions for one fqmn.
+     */
     public SearchResponse<MetaplusDoc> readMulti(@NonNull String fqmn, int size, SearchOptions searchOptions) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_search")
                 .queryParam("version", true)
@@ -127,6 +142,9 @@ public class TrashDao {
         return response.getBodyAsSearchResponse(MetaplusDoc.class);
     }
 
+    /**
+     * Read one trash document by internal id.
+     */
     public MetaplusDoc readById(@NonNull String id, PatchOptions patchOptions) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_doc/{id}");
         _applySingleDocReadOptions(builder, patchOptions);
@@ -142,6 +160,9 @@ public class TrashDao {
         throw _failureWithEsResponse("readById", _targetDocId(id), response);
     }
 
+    /**
+     * Count trash documents by domain or across all domains.
+     */
     public int countByDomain(String domain, SearchOptions searchOptions) {
         URI uri = _buildCountUri(searchOptions);
 
@@ -159,6 +180,9 @@ public class TrashDao {
         return response.getBody().getInt("count", 0);
     }
 
+    /**
+     * List trash document ids by domain or across all domains.
+     */
     public SearchResponse<MetaplusDoc> listByDomain(String domain, int size, SearchOptions searchOptions) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/{index}/_search")
                 .queryParam("version", true)
@@ -183,6 +207,9 @@ public class TrashDao {
         return response.getBodyAsSearchResponse(MetaplusDoc.class);
     }
 
+    /**
+     * Clear trash documents by domain or across all domains.
+     */
     public Result clearByDomain(String domain, PatchOptions patchOptions) {
         String target = _targetDomainOrAll(domain);
 
@@ -289,7 +316,7 @@ public class TrashDao {
         if (!source.isEmpty() && !source.endsWith(";") && !source.endsWith("}")) {
             source = source + ";";
         }
-        copied.setSource(ValuesStore.SCRIPT_BEFORE_ALL_IN_ONE + source + "ctx._id = null;");
+        copied.setSource(ValueStore.SCRIPT_BEFORE_ALL_IN_ONE + source + "ctx._id = null;");
         return copied;
     }
 

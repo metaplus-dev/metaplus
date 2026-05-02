@@ -1,7 +1,7 @@
 package dev.metaplus.backend.server.dao;
 
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.backend.server.es.EsIntegrationTestSupport;
 import dev.metaplus.core.model.patch.Result;
 import dev.metaplus.core.model.patch.Script;
@@ -31,11 +31,11 @@ class DocDaoReindexByQueryIT extends EsIntegrationTestSupport {
     void setUpDao() {
         indexDao = new IndexDao(esClient);
 
-        ValuesStore valuesStore = mock(ValuesStore.class);
-        when(valuesStore.composeScript(anyString(), anyString()))
+        ValueStore valueStore = mock(ValueStore.class);
+        when(valueStore.composeScript(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(1));
 
-        docDao = new DocDao(esClient, valuesStore, indexDao);
+        docDao = new DocDao(esClient, valueStore, indexDao);
     }
 
     @AfterEach

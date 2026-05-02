@@ -6,7 +6,7 @@ import dev.metaplus.backend.server.dao.IndexDao;
 import dev.metaplus.backend.server.domain.DomainStore;
 import dev.metaplus.backend.server.domain.SchemaStore;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.model.DomainDoc;
 import dev.metaplus.core.model.MetaplusDoc;
 import dev.metaplus.core.model.patch.PatchOptions;
@@ -31,14 +31,20 @@ public class DomainService {
     private final IndexDao indexDao;
     private final DomainStore domainStore;
     private final SchemaStore schemaStore;
-    private final ValuesStore valuesStore;
+    private final ValueStore valueStore;
     private final PrivilegeService privilegeService;
 
 
+    /**
+     * Return all persisted domain docs.
+     */
     public SearchResponse<MetaplusDoc> getAllDomains(int size) {
         return docDao.readByDomain(DomainStore.DOMAIN_DOMAIN, size, null, null);
     }
 
+    /**
+     * Read one domain, preferring the in-memory cache.
+     */
     public DomainDoc readDomain(String domainName) {
         DomainDoc domainDoc = domainStore.getDomainDoc(domainName);
         if (domainDoc != null) {
@@ -47,6 +53,9 @@ public class DomainService {
         return readDomainDirectly(domainName, null);
     }
 
+    /**
+     * Read one domain directly from storage and warm caches.
+     */
     public DomainDoc readDomainDirectly(String domainName, PatchOptions patchOptions) {
         MetaplusDoc persistedDoc = docDao.read("domain:metaplus:main:" + domainName, patchOptions);
         if (persistedDoc == null) {
@@ -56,19 +65,28 @@ public class DomainService {
         DomainDoc domainDoc = persistedDoc.bindNode(DomainDoc.class);
         domainStore.putDomainDoc(domainDoc);
         schemaStore.putDomainDoc(domainDoc);
-        valuesStore.putDomainDoc(domainDoc);
+        valueStore.putDomainDoc(domainDoc);
         return domainDoc;
     }
 
+    /**
+     * Check whether one domain exists in the in-memory cache.
+     */
     public boolean existDomain(String domainName) {
         return domainStore.existDomain(domainName);
     }
 
+    /**
+     * Return all custom concrete domains.
+     */
     public Set<String> customDomainSet() {
         return domainStore.customDomainSet();
     }
 
 
+    /**
+     * Create one domain and its backing index if needed.
+     */
     public Result createDomain(@NonNull PatchRequest patch, PatchOptions patchOptions) {
         DomainDoc domainDoc = patch.getDoc().bindNode(DomainDoc.class);
         String domain = domainDoc.getMetaDomainName();
@@ -128,11 +146,14 @@ public class DomainService {
         DomainDoc persistedDomainDoc = persistedDoc.bindNode(DomainDoc.class);
         domainStore.putDomainDoc(persistedDomainDoc);
         schemaStore.putDomainDoc(persistedDomainDoc);
-        valuesStore.putDomainDoc(persistedDomainDoc);
+        valueStore.putDomainDoc(persistedDomainDoc);
         return result;
     }
 
 
+    /**
+     * Update one domain and refresh related caches.
+     */
     public Result updateDomain(@NonNull PatchRequest patch, PatchOptions patchOptions) {
         DomainDoc domainDoc = patch.getDoc().bindNode(DomainDoc.class);
         String domain = domainDoc.getMetaDomainName();
@@ -186,10 +207,13 @@ public class DomainService {
         DomainDoc persistedDomainDoc = persistedDoc.bindNode(DomainDoc.class);
         domainStore.putDomainDoc(persistedDomainDoc);
         schemaStore.putDomainDoc(persistedDomainDoc);
-        valuesStore.putDomainDoc(persistedDomainDoc);
+        valueStore.putDomainDoc(persistedDomainDoc);
         return result;
     }
 
+    /**
+     * Delete one domain and its backing index when allowed.
+     */
     public Result deleteDomain(@NonNull String domainName, boolean force, PatchOptions patchOptions) {
         // 1. validate
         if (!domainStore.existDomain(domainName)) {
@@ -227,7 +251,7 @@ public class DomainService {
         // 5. delete stores
         domainStore.deleteDomain(domainName);
         schemaStore.deleteDomain(domainName);
-        valuesStore.deleteDomain(domainName);
+        valueStore.deleteDomain(domainName);
         return result;
     }
 

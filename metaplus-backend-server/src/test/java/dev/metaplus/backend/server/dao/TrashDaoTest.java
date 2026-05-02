@@ -3,7 +3,7 @@ package dev.metaplus.backend.server.dao;
 import dev.metaplus.backend.lib.es.EsClient;
 import dev.metaplus.backend.lib.es.EsResponse;
 import dev.metaplus.backend.server.BackendServerException;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.model.patch.Script;
 import dev.metaplus.core.model.search.SearchOptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +66,7 @@ class TrashDaoTest {
         assertNotNull(bodyRef.get());
         JsonObject sentScript = bodyRef.get().getJsonObject("script");
         assertNotNull(sentScript);
-        assertTrue(sentScript.getString("source").startsWith(ValuesStore.SCRIPT_BEFORE_ALL_IN_ONE));
+        assertTrue(sentScript.getString("source").startsWith(ValueStore.SCRIPT_BEFORE_ALL_IN_ONE));
         assertTrue(sentScript.getString("source").endsWith("ctx._id = null;"));
         assertEquals("ctx._source.meta.flag = true", script.getSource());
     }

@@ -15,6 +15,9 @@ public final class ValueExprUtil {
     private ValueExprUtil() {
     }
 
+    /**
+     * Convert a mappings path into a logical field path.
+     */
     public static String toLogicalFieldPath(String mappingsPath) {
         if (mappingsPath == null || mappingsPath.isEmpty() || "$".equals(mappingsPath)) {
             return "";
@@ -39,6 +42,9 @@ public final class ValueExprUtil {
         return String.join(".", fieldSegments);
     }
 
+    /**
+     * Convert a $value template into a painless expression.
+     */
     public static String toPainlessValueExpr(String template) {
         if (template == null || template.isEmpty()) {
             return "''";

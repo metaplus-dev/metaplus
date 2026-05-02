@@ -8,7 +8,7 @@ import dev.metaplus.backend.server.dao.IndexDao;
 import dev.metaplus.backend.server.domain.DomainStore;
 import dev.metaplus.backend.server.domain.SchemaStore;
 import dev.metaplus.backend.server.domain.StorageUtil;
-import dev.metaplus.backend.server.domain.ValuesStore;
+import dev.metaplus.backend.server.domain.ValueStore;
 import dev.metaplus.core.model.DomainDoc;
 import dev.metaplus.core.model.MetaplusDoc;
 import dev.metaplus.core.model.search.SearchResponse;
@@ -29,8 +29,11 @@ public class BootstrapService {
     private final DocDao docDao;
     private final DomainStore domainStore;
     private final SchemaStore schemaStore;
-    private final ValuesStore valuesStore;
+    private final ValueStore valueStore;
 
+    /**
+     * Bootstrap built-in domains and then warm the in-memory registry.
+     */
     public BootstrapReport bootstrapBuiltInsAndLoadDomainRegistry() {
         BootstrapReport report = new BootstrapReport();
         List<DomainDoc> builtInDomainDocs = builtInDomainCatalog.listBuiltInDomainDocs();
@@ -38,7 +41,8 @@ public class BootstrapService {
         String domainIndex = StorageUtil.storageIndex(DomainStore.DOMAIN_DOMAIN);
 
         if (!indexDao.existIndex(domainIndex)) {
-            indexDao.createIndex(domainIndex, stagingDomainStore.getMergedPureStorage(DomainStore.DOMAIN_DOMAIN));
+            indexDao.createIndex(domainIndex,
+                    StorageUtil.pureStorage(stagingDomainStore.getMergedStorage(DomainStore.DOMAIN_DOMAIN)));
             report.markCreatedDomainIndex();
         }
 
@@ -56,6 +60,9 @@ public class BootstrapService {
         return report;
     }
 
+    /**
+     * Verify built-in domains already exist and then warm the in-memory registry.
+     */
     public BootstrapReport verifyBuiltInsAndLoadDomainRegistry() {
         BootstrapReport report = new BootstrapReport();
         String domainIndex = StorageUtil.storageIndex(DomainStore.DOMAIN_DOMAIN);
@@ -78,11 +85,11 @@ public class BootstrapService {
     private DomainStore _buildStagingDomainStore(List<DomainDoc> builtInDomainDocs) {
         DomainStore stagingDomainStore = new DomainStore();
         SchemaStore stagingSchemaStore = new SchemaStore(stagingDomainStore);
-        ValuesStore stagingValuesStore = new ValuesStore(stagingDomainStore);
+        ValueStore stagingValueStore = new ValueStore(stagingDomainStore);
         for (DomainDoc domainDoc : builtInDomainDocs) {
             stagingDomainStore.putDomainDoc(domainDoc);
             stagingSchemaStore.putDomainDoc(domainDoc);
-            stagingValuesStore.putDomainDoc(domainDoc);
+            stagingValueStore.putDomainDoc(domainDoc);
         }
         return stagingDomainStore;
     }
@@ -115,7 +122,7 @@ public class BootstrapService {
             DomainDoc domainDoc = doc.bindNode(DomainDoc.class);
             domainStore.putDomainDoc(domainDoc);
             schemaStore.putDomainDoc(domainDoc);
-            valuesStore.putDomainDoc(domainDoc);
+            valueStore.putDomainDoc(domainDoc);
         }
         report.setLoadedDomainCount(response.getHitsSize());
     }
@@ -123,6 +130,6 @@ public class BootstrapService {
     private void _clearDomainCaches() {
         domainStore.clear();
         schemaStore.clear();
-        valuesStore.clear();
+        valueStore.clear();
     }
 }
